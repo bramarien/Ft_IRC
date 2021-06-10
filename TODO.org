@@ -1,0 +1,6 @@
+
+NICK amy
+
+USER amy * *:Amy Pond (le texte apres les : est garder tel quel)
+
+PRIVMSG amy :Yes?
