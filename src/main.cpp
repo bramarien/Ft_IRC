@@ -3,17 +3,83 @@
 #include "../inc/Client.hpp"
 #include "../inc/Message.hpp"
 
-// #define DATA_BUFFER "Mona Lisa was painted by Leonardo da Vinci"
+
 #define DATA_BUFFER 5000
 
  #define MAX_CONNECTIONS 1024
 
-std::string executionner(char buf[5000])
-{
-    return("");
+void disp_list(std::list<std::string> v) {
+        std::list<std::string>::iterator it = v.begin();
+        for(; it != v.end(); it++)
+        {
+                std::cout << *it << '\n';
+        }
+
 }
 
-int create_tcp_server_socket() {
+std::string split_first_char(std::string &str, char separator) {
+        size_t pos = 0;
+        std::list<std::string> list_temp;
+        std::string temp;
+
+        if ((pos = str.find(separator)) != std::string::npos)
+        {
+                temp = str.substr(pos, str.length());
+                str = str.erase(pos, str.length());
+        }
+        else {
+                return("");
+        }
+
+        return(temp);
+}
+
+std::list<std::string> split_char(std::string str, char separator) {
+        size_t pos = 0;
+        std::list<std::string> list_temp;
+
+        while ((pos = str.find(separator)) != std::string::npos)
+        {
+                std::string temp = str.substr(0, pos);
+                if (temp.length() != 0) {
+                        list_temp.push_back(temp);
+                }
+                str = str.erase(0, pos + 1);
+        }
+        if (pos == std::string::npos) {
+                std::string temp = str.substr(0, pos);
+                if (temp.length() != 0) {
+                        list_temp.push_back(temp);
+                }
+        }
+        return(list_temp);
+}
+
+void parsing_cmd(char buf[5000], Message &message) {
+        std::string buf_str(buf);
+        std::list<std::string> list_temp;
+
+        std::string rhs = split_first_char(buf_str, ':');
+        list_temp = split_char(buf_str, ' ');
+
+        if (rhs.length() != 0)
+                list_temp.push_back(rhs);
+
+        std::list<std::string>::iterator it = list_temp.begin();
+        message.setCmd(*it);
+        list_temp.erase(it);
+        message.setParams(list_temp);
+
+}
+
+std::string executionner(char buf[5000], Message &message)
+{
+        parsing_cmd(buf, message);
+        disp_list(message.getParams());
+        return("");
+}
+
+int create_tcp_server_socket(int port) {
         struct sockaddr_in saddr;
         int fd, ret_val;
 
@@ -27,7 +93,7 @@ int create_tcp_server_socket() {
 
         /* Initialize the socket address structure */
         saddr.sin_family = AF_INET;
-        saddr.sin_port = htons(6667);
+        saddr.sin_port = htons(port);
         saddr.sin_addr.s_addr = INADDR_ANY;
 
         /* Step2: bind the socket to port 7000 on the local host */
@@ -48,7 +114,7 @@ int create_tcp_server_socket() {
         return fd;
 }
 
-int main () {
+int main (int ac, char *av[]) {
 
         Server serv_test;
         Message mess_test;
@@ -59,10 +125,16 @@ int main () {
         socklen_t addrlen;
         int all_connections[MAX_CONNECTIONS];
 
+        if (ac != 3)
+        {
+          std::cout << "Please provide port and password as follows :\n\t$ ./ircserv <port> <password>" << '\n';
+          exit(1);
+        }
+
         std::string response = "";
 
         /* Get the socket server fd */
-        server_fd = create_tcp_server_socket();
+        server_fd = create_tcp_server_socket(atoi(av[1]));
         if (server_fd == -1) {
                 fprintf(stderr, "Failed to create a server\n");
                 return -1;
@@ -116,8 +188,8 @@ int main () {
                                         /* read incoming data */
                                         printf("Returned fd is %d [index, i: %d]\n", all_connections[i], i);
                                         ret_val = recv(all_connections[i], buf, DATA_BUFFER, 0);
-                                        response = executionner(buf);
-                                        ret_val = send(all_connections[i],"KOUKOU", sizeof("KOUKOU"), 0);
+                                        response = executionner(buf, mess_test);
+                                        // ret_val = send(all_connections[i],"KOUKOU", sizeof("KOUKOU"), 0);
                                         if (ret_val == 0) {
                                                 printf("Closing connection for fd:%d\n", all_connections[i]);
                                                 close(all_connections[i]);

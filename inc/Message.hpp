@@ -2,13 +2,15 @@
 #pragma once
 
 # include <iostream>
-# include <vector>
+# include <list>
 # include <stdlib.h>
 
 class Message
 {
 
 public:
+
+    typedef std::list<std::string> t_list;
 
     Message();
     Message(std::string nick, std::string user, std::string real, std::string pass);
@@ -17,11 +19,23 @@ public:
 
     Message &   operator=( Message const & rhs );
 
+    t_list getParams(void){
+      return (this->params);
+    }
+    void setParams(t_list v) {
+      this->params = v;
+    }
+    std::string getCmd(void){
+      return (this->command);
+    }
+    void setCmd(std::string str) {
+      this->command = str;
+    }
 
 private:
 
     std::string command;
-    std::vector<std::string> params;
+    t_list params;
 
 };
 
