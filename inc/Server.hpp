@@ -2,6 +2,7 @@
 
 # include <iostream>
 #include <vector>
+#include <map>
 # include "Client.hpp"
 #include "main.hpp"
 #include "Server.hpp"
@@ -17,6 +18,9 @@ class Server
 {
 
 public:
+
+std::map<std::string, std::vector<Client*> > chan; //chans["#channel"][10] -> accees au 10eme client du chan "#channel"
+//std::map<std::string, std::map<std::string, std::string> > chan_flag;
 
 Server(int port, std::string pass);
 Server(Server const & src);
