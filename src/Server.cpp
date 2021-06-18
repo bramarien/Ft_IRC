@@ -4,8 +4,9 @@
 Server::Server() : _portnum(6667), _password("qwe"){
 }
 
-Server::Server(int port, std::string pass) : _portnum(port), _password(pass){
-
+Server::Server(int port, std::string pass) : _portnum(port), _password(pass)
+{
+  socket_fd.clear();
 }
 Server::Server( Server const & src ) : _clients(src.getClients()), _portnum(src.getPort()), _password(src.getPass()){
 }
@@ -16,23 +17,6 @@ Server::~Server(){
 Server &    Server::operator=(Server const & rhs ){
         this->_clients = rhs._clients;
         return(*this);
-}
-
-/*GETTERS N SETTERS*/
-
-std::vector<Client> Server::getClients(void) const {
-        return(this->_clients);
-}
-void Server::setClients(std::vector<Client> src){
-        this->_clients = src;
-}
-
-int Server::getPort(void) const {
-        return(this->_portnum);
-}
-
-std::string Server::getPass(void) const {
-        return(this->_password);
 }
 
 int Server::launch(void) {
@@ -141,6 +125,7 @@ int Server::create_tcp_server_socket(int port) {
 
         /* Step1: create a TCP socket */
         fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        std::cout << fd << " server fd :D" << std::endl;
         if (fd == -1) {
                 fprintf(stderr, "socket failed [%s]\n", strerror(errno));
                 return -1;
