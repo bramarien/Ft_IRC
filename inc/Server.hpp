@@ -21,7 +21,8 @@ class Server
     //Real Server Param
     int const _portnum;
     std::string const _password;
-    std::list<int> socket_fd; // i->0 = Server fd
+
+    std::vector<int> socket_fd; // i->0 = Server fd
     struct sockaddr_in saddr;
 
     //tools for Server
@@ -38,6 +39,7 @@ class Server
   Server &  operator=( Server const & rhs );
 
   int launch(void);
+  void loop(void);
   int create_tcp_server_socket(int port);
   std::string executionner(char buf[5000], Message &message);
 
