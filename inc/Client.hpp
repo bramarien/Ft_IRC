@@ -1,26 +1,36 @@
 #pragma once
 
-# include <iostream>
+#include <iostream>
+#include <iostream>
+#include <vector>
+#include <map>
+#include "Client.hpp"
+#include "main.hpp"
+#include "Server.hpp"
+#include "Message.hpp"
 
 class Client
 {
 
-	public:
+public:
 
-    Client(std::string nick, std::string user, std::string real, std::string pass);
-		Client( Client const & src );
-		virtual ~Client();
+Client(sockaddr_in inf, socklen_t len, int fd);
+Client( Client const & src );
+virtual ~Client();
 
-		Client &		operator=( Client const & rhs );
+Client &  operator=( Client const & rhs );
 
 
-	private:
+private:
+Client();
 
-		Client();
-    std::string nickname;
-    std::string username;
-    std::string realname;
-    std::string password;
+sockaddr_in info;
+socklen_t len;
+int fd;
+std::string nickname;
+std::string username;
+std::string realname;
+std::string password;
 
 };
 

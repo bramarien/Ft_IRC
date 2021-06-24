@@ -50,6 +50,7 @@ void  Server::loop(void)
         new_fd = accept(socket_fd[0], (struct sockaddr*)&new_addr, &addrlen);
         if (new_fd >= 0 && socket_fd.size() <= 1024)
         {
+          Client * new_user = new Client(new_addr, addrlen, new_fd);
           std::cout << "Accepted a new connection with fd " << new_fd << std::endl;
           socket_fd.push_back(new_fd);
         }

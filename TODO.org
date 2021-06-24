@@ -8,5 +8,4 @@ USER amy * *:Amy Pond (le texte apres les : est garder tel quel)
 
 PRIVMSG amy :Yes?
 
-
 Pridf dkfn sjdfn :ksdfnusdnfkjnsds as dfasdf : sdfjsndfjn
