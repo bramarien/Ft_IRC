@@ -6,7 +6,7 @@ Server::Server() : _portnum(6667), _password("qwe"){
 
 Server::Server(int port, std::string pass) : _portnum(port), _password(pass)
 {
-  socket_fd.clear();
+  _socket_fd.clear();
 }
 Server::Server( Server const & src ) : _clients(src.getClients()), _portnum(src.getPort()), _password(src.getPass()){
 }
@@ -32,7 +32,7 @@ void  Server::loop(void)
   while (1)
   {
     FD_ZERO(&read_fd_set); /* Set the fd_set before passing it to the select call */
-    for (std::vector<int>::iterator it = socket_fd.begin(); it != socket_fd.end(); it++)
+    for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++)
         FD_SET(*it, &read_fd_set);
 
     /* Invoke select() and then wait! */
@@ -44,15 +44,19 @@ void  Server::loop(void)
     {
       std::cout << "Return of select : " << ret_val << std::endl;
       /* Check if the fd with event is the server fd */
-      if (FD_ISSET(socket_fd[0], &read_fd_set))
+      if (FD_ISSET(_socket_fd[0], &read_fd_set))
       {
         std::cout << "The server find a new connection" << std::endl;
-        new_fd = accept(socket_fd[0], (struct sockaddr*)&new_addr, &addrlen);
-        if (new_fd >= 0 && socket_fd.size() <= 1024)
+        new_fd = accept(_socket_fd[0], (struct sockaddr*)&new_addr, &addrlen);
+        if (new_fd >= 0 && _socket_fd.size() <= 1024)
         {
-          Client * new_user = new Client(new_addr, addrlen, new_fd);
+          Client* new_user = new Client(new_addr, addrlen, new_fd);
           std::cout << "Accepted a new connection with fd " << new_fd << std::endl;
-          socket_fd.push_back(new_fd);
+          this->_socket_fd.push_back(new_fd);
+          this->_clients.push_back(*new_user);
+          std::vector<Client>::iterator it = this->_clients.end();
+          --it;
+          std::cout << it->getInfo().sin_port << " -> Ip adress of new_user" << std::endl;
         }
         else
         {
@@ -64,7 +68,7 @@ void  Server::loop(void)
       }
 
       /* Check if the fd with event is a non-server fd */
-      for (std::vector<int>::iterator it_fd = socket_fd.begin() + 1; it_fd != socket_fd.end(); it_fd++)
+      for (std::vector<int>::iterator it_fd = _socket_fd.begin() + 1; it_fd != _socket_fd.end(); it_fd++)
       {
         if (FD_ISSET(*it_fd, &read_fd_set))
         {
@@ -77,7 +81,7 @@ void  Server::loop(void)
           {
             std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
             close(*it_fd);
-            socket_fd.erase(it_fd); /* Connection is now closed */
+            _socket_fd.erase(it_fd); /* Connection is now closed */
             break;
           }
           if (ret_val > 0)
@@ -115,14 +119,14 @@ int Server::launch(void)
     std::cerr << "Failed to create a server" << std::endl;
     return -1;
   }
-  socket_fd.push_back(server_fd);
+  _socket_fd.push_back(server_fd);
 
   loop();
 
   /* Last step: Close all the sockets */
-  for (std::vector<int>::iterator it_fd = socket_fd.begin(); it_fd != socket_fd.end(); it_fd++)
+  for (std::vector<int>::iterator it_fd = _socket_fd.begin(); it_fd != _socket_fd.end(); it_fd++)
       close(*it_fd);
-  socket_fd.clear();
+  _socket_fd.clear();
 
   return 0;
 }
@@ -130,7 +134,6 @@ int Server::launch(void)
 
 int Server::create_tcp_server_socket(int port)
 {
-        struct sockaddr_in saddr;
         int fd, ret_val;
 
         /* Step1: create a TCP socket */
@@ -143,12 +146,12 @@ int Server::create_tcp_server_socket(int port)
         printf("Created a socket with fd: %d\n", fd);
 
         /* Initialize the socket address structure */
-        saddr.sin_family = AF_INET;
-        saddr.sin_port = htons(port);
-        saddr.sin_addr.s_addr = INADDR_ANY;
+        _saddr.sin_family = AF_INET;
+        _saddr.sin_port = htons(port);
+        _saddr.sin_addr.s_addr = INADDR_ANY;
 
         /* Step2: bind the socket to port 7000 on the local host */
-        ret_val = bind(fd, (struct sockaddr *)&saddr, sizeof(struct sockaddr_in));
+        ret_val = bind(fd, (struct sockaddr *)&_saddr, sizeof(struct sockaddr_in));
         if (ret_val != 0)
         {
           fprintf(stderr, "bind failed [%s]\n", strerror(errno));

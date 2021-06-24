@@ -22,8 +22,8 @@ class Server
     int const _portnum;
     std::string const _password;
 
-    std::vector<int> socket_fd; // i->0 = Server fd
-    struct sockaddr_in saddr;
+    std::vector<int> _socket_fd; // i->0 = Server fd
+    struct sockaddr_in _saddr;
 
     //tools for Server
     std::vector<Client> _clients;

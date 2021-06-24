@@ -20,6 +20,7 @@ virtual ~Client();
 
 Client &  operator=( Client const & rhs );
 
+sockaddr_in getInfo(void) { return(this->info); }
 
 private:
 Client();
