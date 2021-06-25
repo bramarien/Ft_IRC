@@ -179,5 +179,6 @@ std::string Server::executionner(char buf[5000], Message &message)
 {
         message.parsing_cmd(buf);
         message.disp_mess(message);
+        nick_fct(message);
         return("");
 }

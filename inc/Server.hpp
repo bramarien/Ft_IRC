@@ -7,6 +7,7 @@
 #include "main.hpp"
 #include "Server.hpp"
 #include "Message.hpp"
+#include "nick.hpp"
 
 #define DATA_BUFFER 5000
 

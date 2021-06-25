@@ -1,12 +1,16 @@
-bool  nick_check(std::string nick){
+#include "../inc/nick.hpp"
 
+bool  nick_check(std::string nick){
+        return(false);
 }
 
 int   nick_fct(Message msg){
-        std::
-        if (strcmp("NICK", msg.getCmd()) == 0) {
-                if (nick_check(msg.getParams())) {
-                  
-                }
+        if ("NICK" ==  msg.getCmd()) {
+                // msg.getParams().front();
         }
+        return(0);
 }
+
+// verif if username already exists
+// otherwise send error
+//

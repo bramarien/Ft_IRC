@@ -1,5 +1,7 @@
-#pragma once;
+#pragma once
 
-#include <Message.hpp>
+#include "Message.hpp"
+
+
 
 int   nick_fct(Message msg);
