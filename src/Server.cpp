@@ -177,7 +177,7 @@ int Server::create_tcp_server_socket(int port)
 
 std::string Server::executionner(char buf[5000], Message &message)
 {
-        message.parsing_cmd(buf);
+        message.parsing_cmd(buf, this);
         message.disp_mess(message);
         nick_fct(message);
         return("");
