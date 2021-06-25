@@ -7,12 +7,12 @@
 
 class Message
 {
-  private:
-    typedef std::list<std::string> t_list;
-    std::string split_first_char(std::string &str, char separator);
-    std::list<std::string> split_char(std::string str, char separator);
-    std::string command;
-    t_list params;
+private:
+  typedef std::list<std::string> t_list;
+  std::string split_first_char(std::string &str, char separator);
+  std::list<std::string> split_char(std::string str, char separator);
+  std::string command;
+  t_list params;
 
 public:
   Message();

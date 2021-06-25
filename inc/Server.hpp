@@ -13,41 +13,53 @@
 #define MAX_CONNECTIONS 1024
 
 class Client;
+class Message;
 
 class Server
 {
-  private:
-    Server();
-    //Real Server Param
-    int const _portnum;
-    std::string const _password;
+private:
+Server();
+//Real Server Param
+int const _portnum;
+std::string const _password;
+char _buf[DATA_BUFFER];
+Message mess;
+std::vector<int> _socket_fd;     // i->0 = Server fd
+struct sockaddr_in _saddr;
 
-    std::vector<int> _socket_fd; // i->0 = Server fd
-    struct sockaddr_in _saddr;
+//tools for Server
+std::vector<Client> _clients;
 
-    //tools for Server
-    std::vector<Client> _clients;
+public:
+// HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
+std::map<std::string, std::vector<Client*> > chan;
+//std::map<std::map<std::string, std::vector<Client*>>, std::string> chan_flag;
 
-  public:
-    // HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
-  std::map<std::string, std::vector<Client*> > chan;
-  //std::map<std::map<std::string, std::vector<Client*>>, std::string> chan_flag;
+Server(int port, std::string pass);
+Server(Server const & src);
+virtual ~Server();
+Server &  operator=( Server const & rhs );
 
-  Server(int port, std::string pass);
-  Server(Server const & src);
-  virtual ~Server();
-  Server &  operator=( Server const & rhs );
+int create_tcp_server_socket(int port);
+int launch(void);
+void loop(void);
+void on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd);
+void on_message(std::vector<int>::iterator it_fd, int* ret_val);
+std::string executionner(char buf[5000], Message &message);
 
-  int launch(void);
-  void loop(void);
-  int create_tcp_server_socket(int port);
-  std::string executionner(char buf[5000], Message &message);
-
-  //getters & setters
-  std::vector<Client> getClients(void) const { return(this->_clients); }
-  void setClients(std::vector<Client> src) { this->_clients = src; }
-  int getPort(void) const { return(this->_portnum); }
-  std::string getPass(void) const { return(this->_password); }
+//getters & setters
+std::vector<Client> getClients(void) const {
+        return(this->_clients);
+}
+void setClients(std::vector<Client> src) {
+        this->_clients = src;
+}
+int getPort(void) const {
+        return(this->_portnum);
+}
+std::string getPass(void) const {
+        return(this->_password);
+}
 
 
 };

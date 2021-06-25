@@ -6,7 +6,7 @@ Server::Server() : _portnum(6667), _password("qwe"){
 
 Server::Server(int port, std::string pass) : _portnum(port), _password(pass)
 {
-  _socket_fd.clear();
+        _socket_fd.clear();
 }
 Server::Server( Server const & src ) : _clients(src.getClients()), _portnum(src.getPort()), _password(src.getPass()){
 }
@@ -19,116 +19,121 @@ Server &    Server::operator=(Server const & rhs ){
         return(*this);
 }
 
-void  Server::loop(void)
+void Server::on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd) {
+        Client* new_user = new Client(new_addr, addrlen, new_fd);
+        std::cout << "Accepted a new connection with fd " << new_fd << std::endl;
+        this->_socket_fd.push_back(new_fd);
+        this->_clients.push_back(*new_user);
+        std::vector<Client>::iterator it = this->_clients.end();
+        --it;
+        std::cout << inet_ntoa(it->getInfo().sin_addr) << " -> Ip adress of new_user" << std::endl;
+}
+
+void Server::loop(void)
 {
-  char buf[DATA_BUFFER];
-  fd_set read_fd_set;
-  int ret_val;
-  int new_fd;
+        fd_set read_fd_set;
+        int ret_val;
+        int new_fd;
 
-  struct sockaddr_in new_addr;
-  socklen_t addrlen;
+        struct sockaddr_in new_addr;
+        socklen_t addrlen;
 
-  while (1)
-  {
-    FD_ZERO(&read_fd_set); /* Set the fd_set before passing it to the select call */
-    for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++)
-        FD_SET(*it, &read_fd_set);
-
-    /* Invoke select() and then wait! */
-    std::cout << "Poll with select to listen for entry" << std::endl;
-    ret_val = select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL);
-
-    /* select() woke up. Identify the fd that has events */
-    if (ret_val >= 0)
-    {
-      std::cout << "Return of select : " << ret_val << std::endl;
-      /* Check if the fd with event is the server fd */
-      if (FD_ISSET(_socket_fd[0], &read_fd_set))
-      {
-        std::cout << "The server find a new connection" << std::endl;
-        new_fd = accept(_socket_fd[0], (struct sockaddr*)&new_addr, &addrlen);
-        if (new_fd >= 0 && _socket_fd.size() <= 1024)
+        while (1)
         {
-          Client* new_user = new Client(new_addr, addrlen, new_fd);
-          std::cout << "Accepted a new connection with fd " << new_fd << std::endl;
-          this->_socket_fd.push_back(new_fd);
-          this->_clients.push_back(*new_user);
-          std::vector<Client>::iterator it = this->_clients.end();
-          --it;
-          std::cout << it->getInfo().sin_port << " -> Ip adress of new_user" << std::endl;
-        }
-        else
-        {
-          std::cerr << "accept failed " << strerror(errno) << std::endl;
-          //Throw Here.
-        }
-        ret_val--;
-        if (!ret_val) continue;
-      }
+                FD_ZERO(&read_fd_set); /* Set the fd_set before passing it to the select call */
+                for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++)
+                        FD_SET(*it, &read_fd_set);
 
-      /* Check if the fd with event is a non-server fd */
-      for (std::vector<int>::iterator it_fd = _socket_fd.begin() + 1; it_fd != _socket_fd.end(); it_fd++)
-      {
-        if (FD_ISSET(*it_fd, &read_fd_set))
-        {
-          /* read incoming data */
-          std::cout << "Listening from fd-> " << *it_fd << std::endl;
-          ret_val = recv(*it_fd, buf, DATA_BUFFER, 0);
-          // response = executionner(buf, mess_test);
-          // ret_val = send(all_connections[i],"KOUKOU", sizeof("KOUKOU"), 0);
-          if (ret_val == 0)
-          {
-            std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
-            close(*it_fd);
-            _socket_fd.erase(it_fd); /* Connection is now closed */
-            break;
-          }
-          if (ret_val > 0)
-          {
-            std::cout << buf << std::endl;
-          }
-          if (ret_val == -1)
-          {
-            std::cerr << "recv() failed for fd-> " << *it_fd << " : " << strerror(errno) << std::endl;
-            break;
-          }
-          memset(buf, '\0', DATA_BUFFER);
-        }
-        ret_val--;
-        if (!ret_val) continue;
-      } /* for-loop */
-    } /* (ret_val >= 0) */
-  } /* while(1) */
+                /* Invoke select() and then wait! */
+                std::cout << "Poll with select to listen for entry" << std::endl;
+                ret_val = select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL);
+
+                /* select() woke up. Identify the fd that has events */
+                if (ret_val >= 0)
+                {
+                        std::cout << "Return of select : " << ret_val << std::endl;
+                        /* Check if the fd with event is the server fd */
+                        if (FD_ISSET(_socket_fd[0], &read_fd_set))
+                        {
+                                std::cout << "The server find a new connection" << std::endl;
+                                new_fd = accept(_socket_fd[0], (struct sockaddr*)&new_addr, &addrlen);
+                                if (new_fd >= 0 && _socket_fd.size() <= 1024)
+                                {
+                                        on_connection(new_addr, addrlen, new_fd);
+                                }
+                                else
+                                {
+                                        std::cerr << "accept failed " << strerror(errno) << std::endl;
+                                        //Throw Here.
+                                }
+                                ret_val--;
+                                if (!ret_val) continue;
+                        }
+
+                        /* Check if the fd with event is a non-server fd */
+                        for (std::vector<int>::iterator it_fd = _socket_fd.begin() + 1; it_fd != _socket_fd.end(); it_fd++)
+                        {
+                                if (FD_ISSET(*it_fd, &read_fd_set))
+                                {
+                                        // on_message(it_fd, &ret_val);
+                                        /* read incoming data */
+                                        std::cout << "Listening from fd-> " << *it_fd << std::endl;
+                                        ret_val = recv(*it_fd, _buf, DATA_BUFFER, 0);
+                                        _buf[ret_val] = 0;
+                                        if (ret_val == 0)
+                                        {
+                                                std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
+                                                close(*it_fd);
+                                                _socket_fd.erase(it_fd); /* Connection is now closed */
+                                                break;
+                                        }
+                                        if (ret_val > 0)
+                                        {
+                                                std::cout << _buf << std::endl;
+                                                std::string response = executionner(_buf, mess);
+                                                // ret_val = send(all_connections[i],"KOUKOU", sizeof("KOUKOU"), 0);
+                                        }
+                                        if (ret_val == -1)
+                                        {
+                                                std::cerr << "recv() failed for fd-> " << *it_fd << " : " << strerror(errno) << std::endl;
+                                                break;
+                                        }
+                                        memset(_buf, '\0', DATA_BUFFER);
+                                }
+                                ret_val--;
+                                if (!ret_val) continue;
+                        } /* for-loop */
+                } /* (ret_val >= 0) */
+        } /* while(1) */
 }
 
 int Server::launch(void)
 {
 
-  Message mess_test;
-  struct sockaddr_in new_addr;
-  int server_fd, new_fd, ret_val, i;
-  socklen_t addrlen;
+        Message mess_test;
+        struct sockaddr_in new_addr;
+        int server_fd, new_fd, ret_val, i;
+        socklen_t addrlen;
 
-  std::string response = "";
+        std::string response = "";
 
-  /* Get the socket server fd */
-  server_fd = create_tcp_server_socket(this->_portnum);
-  if (server_fd == -1)
-  {
-    std::cerr << "Failed to create a server" << std::endl;
-    return -1;
-  }
-  _socket_fd.push_back(server_fd);
+        /* Get the socket server fd */
+        server_fd = create_tcp_server_socket(this->_portnum);
+        if (server_fd == -1)
+        {
+                std::cerr << "Failed to create a server" << std::endl;
+                return -1;
+        }
+        _socket_fd.push_back(server_fd);
 
-  loop();
+        loop();
 
-  /* Last step: Close all the sockets */
-  for (std::vector<int>::iterator it_fd = _socket_fd.begin(); it_fd != _socket_fd.end(); it_fd++)
-      close(*it_fd);
-  _socket_fd.clear();
+        /* Last step: Close all the sockets */
+        for (std::vector<int>::iterator it_fd = _socket_fd.begin(); it_fd != _socket_fd.end(); it_fd++)
+                close(*it_fd);
+        _socket_fd.clear();
 
-  return 0;
+        return 0;
 }
 
 
@@ -154,25 +159,25 @@ int Server::create_tcp_server_socket(int port)
         ret_val = bind(fd, (struct sockaddr *)&_saddr, sizeof(struct sockaddr_in));
         if (ret_val != 0)
         {
-          fprintf(stderr, "bind failed [%s]\n", strerror(errno));
-          close(fd);
-          return -1;
+                fprintf(stderr, "bind failed [%s]\n", strerror(errno));
+                close(fd);
+                return -1;
         }
 
         /* Step3: listen for incoming connections */
         ret_val = listen(fd, 5);
         if (ret_val != 0)
         {
-          fprintf(stderr, "listen failed [%s]\n", strerror(errno));
-          close(fd);
-          return -1;
+                fprintf(stderr, "listen failed [%s]\n", strerror(errno));
+                close(fd);
+                return -1;
         }
         return fd;
 }
 
 std::string Server::executionner(char buf[5000], Message &message)
 {
-  message.parsing_cmd(buf);
-  message.disp_mess(message);
-  return("");
+        message.parsing_cmd(buf);
+        message.disp_mess(message);
+        return("");
 }

@@ -32,12 +32,12 @@ ACTIVES_FLAGS = $(CFLAGSSAN) $(CFLAGSPROD)
 
 OBJS = ${SRCS:.cpp=.o}
 
-all:		$(NAME)
-
 $(NAME):	$(OBJS) $(INCLUDES)
 					$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
 $(OBJS):	$(INCLUDES)
+
+all:		$(NAME)
 
 launch:		$(NAME)
 					./$(NAME)
