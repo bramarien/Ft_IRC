@@ -1,20 +1,11 @@
 #pragma once
 
-# include <iostream>
-#include <vector>
-#include <map>
-# include "Client.hpp"
 #include "main.hpp"
-#include "Server.hpp"
 #include "Message.hpp"
-#include "nick.hpp"
 
 #define DATA_BUFFER 5000
 
 #define MAX_CONNECTIONS 1024
-
-class Client;
-class Message;
 
 class Server
 {

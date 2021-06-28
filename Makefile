@@ -9,7 +9,7 @@ INCLUDES =	$(INCPATH)main.hpp \
 						$(INCPATH)Client.hpp \
 						$(INCPATH)Server.hpp \
 						$(INCPATH)Message.hpp \
-						$(INCPATH)nick.hpp \
+						$(INCPATH)Functions.hpp \
 						$(INCPATH)Replies.hpp
 
 
@@ -17,7 +17,7 @@ INCLUDES =	$(INCPATH)main.hpp \
 SRCS = 		$(SRCSPATH)main.cpp \
 					$(SRCSPATH)Client.cpp \
 					$(SRCSPATH)Server.cpp \
-					$(SRCSPATH)nick.cpp \
+					$(SRCSPATH)Functions.cpp \
 					$(SRCSPATH)Message.cpp
 
 

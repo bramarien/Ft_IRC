@@ -1,9 +1,8 @@
 
 #pragma once
 
-# include <iostream>
-# include <list>
-# include <stdlib.h>
+#include "main.hpp"
+
 
 class Message
 {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utils.hpp"
-
 #define ERR_NOSUCHNICK 401
 #define ERR_NOSUCHSERVER 402
 #define ERR_NOSUCHCHANNEL 403
