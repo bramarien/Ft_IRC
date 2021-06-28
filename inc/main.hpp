@@ -10,9 +10,3 @@
 #include <string>
 #include <vector>
 #include <map>
-
-#include "Server.hpp"
-#include "Message.hpp"
-#include "Client.hpp"
-#include "Functions.hpp"
-#include "Replies.hpp"

@@ -1,6 +1,7 @@
 #include "../inc/Functions.hpp"
+// #include "../inc/main.hpp"
 
-bool  nick_check(std::string nick, Server &serv){
+bool   nick_check(std::string nick, Server &serv){
         return(false);
 }
 

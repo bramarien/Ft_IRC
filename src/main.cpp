@@ -1,7 +1,10 @@
-#include "../inc/main.hpp"
+// #include "../inc/main.hpp"
 #include "../inc/Server.hpp"
 #include "../inc/Client.hpp"
 #include "../inc/Message.hpp"
+
+#include "../inc/main.hpp"
+
 
 int main (int ac, char *av[]) {
 

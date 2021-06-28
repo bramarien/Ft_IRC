@@ -2,6 +2,7 @@
 
 #include "main.hpp"
 #include "Message.hpp"
+#include "Client.hpp"
 
 #define DATA_BUFFER 5000
 

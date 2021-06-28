@@ -1,5 +1,7 @@
 
 #include "../inc/Client.hpp"
+// #include "../inc/main.hpp"
+
 
 Client::Client() : nickname(), username(), realname(), password(){
 

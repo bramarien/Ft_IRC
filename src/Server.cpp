@@ -1,5 +1,7 @@
 
+#include "../inc/Functions.hpp"
 #include "../inc/Server.hpp"
+
 
 Server::Server() : _portnum(6667), _password("qwe"){
 }
