@@ -3,6 +3,8 @@
 #include "main.hpp"
 #include "Message.hpp"
 #include "Client.hpp"
+#include <stdlib.h>
+#include <stdio.h>
 
 #define DATA_BUFFER 5000
 
@@ -21,7 +23,9 @@ std::vector<int> _socket_fd;     // i->0 = Server fd
 struct sockaddr_in _saddr;
 
 //tools for Server
-std::vector<Client> _clients;
+std::vector<Client> _v_clients;
+std::map<int, std::string> _m_fdprefix; // from fd to prefix ()
+std::map<std::string, Client> _m_prefixclient; // from prefix to definitive clients
 
 public:
 // HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
@@ -38,14 +42,14 @@ int launch(void);
 void loop(void);
 void on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd);
 void on_message(std::vector<int>::iterator it_fd, int* ret_val);
-std::string executionner(char buf[5000], Message &message);
+std::string executionner(char buf[5000], Message &message, int fd);
 
 //getters & setters
 std::vector<Client> getClients(void) const {
-        return(this->_clients);
+        return(this->_v_clients);
 }
 void setClients(std::vector<Client> src) {
-        this->_clients = src;
+        this->_v_clients = src;
 }
 int getPort(void) const {
         return(this->_portnum);
@@ -54,7 +58,13 @@ std::string getPass(void) const {
         return(this->_password);
 }
 
+//Functions
 
+bool   nick_check(std::string &nick);
+int   nick_fct(Message msg, int fd);
+int passcmd(Message & msg, int fd);
+int usercmd(Message &msg, int fd);
+int do_cmd(Message msg, int fd);
 };
 
 // std::ostream &			operator<<( std::ostream & o, Server const & i );

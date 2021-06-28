@@ -1,5 +1,3 @@
-
-#include "../inc/Functions.hpp"
 #include "../inc/Server.hpp"
 
 
@@ -10,14 +8,14 @@ Server::Server(int port, std::string pass) : _portnum(port), _password(pass)
 {
         _socket_fd.clear();
 }
-Server::Server( Server const & src ) : _clients(src.getClients()), _portnum(src.getPort()), _password(src.getPass()){
+Server::Server( Server const & src ) : _v_clients(src.getClients()), _portnum(src.getPort()), _password(src.getPass()){
 }
 
 Server::~Server(){
 }
 
 Server &    Server::operator=(Server const & rhs ){
-        this->_clients = rhs._clients;
+        this->_v_clients = rhs._v_clients;
         return(*this);
 }
 
@@ -25,10 +23,8 @@ void Server::on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd) 
         Client* new_user = new Client(new_addr, addrlen, new_fd);
         std::cout << "Accepted a new connection with fd " << new_fd << std::endl;
         this->_socket_fd.push_back(new_fd);
-        this->_clients.push_back(*new_user);
-        std::vector<Client>::iterator it = this->_clients.end();
-        --it;
-        std::cout << inet_ntoa(it->getInfo().sin_addr) << " -> Ip adress of new_user" << std::endl;
+        this->_v_clients.push_back(*new_user);
+        std::cout << inet_ntoa(_v_clients.back().getInfo().sin_addr) << " -> Ip adress of new_user" << std::endl;
 }
 
 void Server::loop(void)
@@ -92,7 +88,7 @@ void Server::loop(void)
                                         if (ret_val > 0)
                                         {
                                                 std::cout << _buf << std::endl;
-                                                std::string response = executionner(_buf, mess);
+                                                std::string response = executionner(_buf, mess, *it_fd);
                                                 // ret_val = send(all_connections[i],"KOUKOU", sizeof("KOUKOU"), 0);
                                         }
                                         if (ret_val == -1)
@@ -177,10 +173,10 @@ int Server::create_tcp_server_socket(int port)
         return fd;
 }
 
-std::string Server::executionner(char buf[5000], Message &message)
+std::string Server::executionner(char buf[5000], Message &message, int fd)
 {
         message.parsing_cmd(buf);
-        message.disp_mess(message);
-        nick_fct(message, *this);
+        message.display();
+        do_cmd(message, fd);
         return("");
 }

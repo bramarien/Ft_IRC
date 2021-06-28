@@ -20,7 +20,7 @@ public:
   virtual ~Message();
   Message &operator=( Message const & rhs );
 
-  void disp_mess(Message mess);
+  void display();
   void parsing_cmd(char buf[5000]);
 
   //Getter & Setter

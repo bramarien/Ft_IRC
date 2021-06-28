@@ -8,7 +8,7 @@ Client::Client() : nickname(), username(), realname(), password(){
 }
 
 Client::Client(sockaddr_in inf, socklen_t len, int fd) : info(inf), len(len), fd(fd), nickname(), username(), realname(), password(){
-
+  is_registered = false;
 }
 
 Client::Client( Client const & src )

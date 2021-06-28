@@ -18,13 +18,13 @@ Message &   Message::operator=(Message const & rhs ){
         return(*this);
 }
 
-void Message::disp_mess(Message mess) {
+void Message::display() {
 
         int i = 0;
-        std::list<std::string> temp = mess.getParams();
+        std::list<std::string> temp = this->getParams();
 
         //printing the command
-        std::cout << "CMD :\t" << mess.getCmd() << std::endl;
+        std::cout << "CMD :\t" << this->getCmd() << std::endl;
 
         //printing the parameters of the this
         std::list<std::string>::iterator it = temp.begin();
@@ -44,7 +44,7 @@ std::string Message::split_first_char(std::string &str, char separator) {
 
         if ((pos = str.find(separator)) != std::string::npos)
         {
-                temp = str.substr(pos, str.length());
+                temp = str.substr(pos + 1, str.length());
                 str = str.erase(pos, str.length());
         }
         else {

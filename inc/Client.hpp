@@ -20,6 +20,10 @@ virtual ~Client();
 Client &  operator=( Client const & rhs );
 
 sockaddr_in getInfo(void) { return(this->info); }
+std::string getNick(void) { return(this->nickname); }
+std::string getPass(void) { return(this->password); }
+std::string getReal(void) { return(this->realname); }
+std::string getUser(void) { return(this->username); }
 
 private:
 Client();
@@ -31,6 +35,8 @@ std::string nickname;
 std::string username;
 std::string realname;
 std::string password;
+bool  is_registered;
+bool  corr_pass;
 
 };
 

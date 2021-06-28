@@ -9,7 +9,6 @@ INCLUDES =	$(INCPATH)main.hpp \
 						$(INCPATH)Client.hpp \
 						$(INCPATH)Server.hpp \
 						$(INCPATH)Message.hpp \
-						$(INCPATH)Functions.hpp \
 						$(INCPATH)Replies.hpp
 
 
