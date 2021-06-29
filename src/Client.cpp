@@ -3,7 +3,7 @@
 // #include "../inc/main.hpp"
 
 
-Client::Client() : nickname(), username(), realname(), password(){
+Client::Client() : info(), len(), fd(), nickname(), username(), realname(), password(){
 
 }
 

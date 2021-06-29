@@ -13,6 +13,7 @@ class Client
 
 public:
 
+Client();
 Client(sockaddr_in inf, socklen_t len, int fd);
 Client( Client const & src );
 virtual ~Client();
@@ -38,8 +39,6 @@ void setInfo(sockaddr_in src) { this->info = src; }
 void setFd(int src) { this->fd = src; }
 
 private:
-Client();
-
 sockaddr_in info;
 socklen_t len;
 int fd;

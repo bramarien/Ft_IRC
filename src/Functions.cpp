@@ -58,15 +58,20 @@ int Server::do_cmd(Message msg, int fd){
         if (msg.getCmd() == "PASS") {
                 passcmd(msg, fd);
         }
-        else if (msg.getCmd() == "NICK") {
-                nickcmd(msg, fd);
+        else if (_m_prefixclient[_m_fdprefix[fd]].getCorr() == true) {
+                if (msg.getCmd() == "NICK") {
+                        nickcmd(msg, fd);
+                }
+                else if (msg.getCmd() == "USER") {
+                        usercmd(msg, fd);
+                }
+                else if (_m_prefixclient[_m_fdprefix[fd]].getReg() == true)
+                {
+                        // join etc...
+                }
         }
-        else if (msg.getCmd() == "USER") {
-                usercmd(msg, fd);
-        }
-        else if (_m_prefixclient[_m_fdprefix[fd]].getReg() == true)
-        {
-                // join etc...
+        else {
+          //balancer erreur
         }
         return (0);
 }

@@ -181,7 +181,7 @@ std::string Server::executionner(char buf[5000], Message &message, int fd)
         return("");
 }
 
-std::string   ft_itoa(int nbr){
+std::string   Server::ft_itoa(int nbr){
         std::string s;
         std::stringstream out;
         out << nbr;
