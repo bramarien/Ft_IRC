@@ -89,7 +89,6 @@ void Server::loop(void)
                                         {
                                                 std::cout << _buf << std::endl;
                                                 std::string response = executionner(_buf, mess, *it_fd);
-                                                // ret_val = send(all_connections[i],"KOUKOU", sizeof("KOUKOU"), 0);
                                         }
                                         if (ret_val == -1)
                                         {

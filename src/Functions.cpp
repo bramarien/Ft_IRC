@@ -1,6 +1,11 @@
 #include "../inc/Server.hpp"
 // #include "../inc/main.hpp"
 
+int Server::send_privmsg(int fd, std::string str)
+{
+  return (send(fd, str.c_str(), sizeof(str.c_str()), 0));
+}
+
 bool Server::nick_check(std::string &nick){
         std::vector<Client>::iterator it = this->_v_clients.begin();
         while(it != this->_v_clients.end()) {
@@ -26,16 +31,19 @@ int Server::nickcmd(Message msg, int fd){
 int Server::passcmd(Message & msg, int fd) {
         std::string s(ft_itoa(fd));
         _m_prefixclient.insert(std::pair<std::string, Client>(s, _v_clients.back()));
-        if (msg.getParams().size() >= 2) {
+        if (msg.getParams().size() >= 2)
+        {
                 //send_reply(fd, "mauvais params fdp");
+                send_privmsg(fd, "False params");
                 std::cout << "False params" << '\n';
         }
         else if (msg.getParams().front() == _password) {
+                send_privmsg(fd, "True pass");
                 std::cout << "True pass" << '\n';
                 _m_prefixclient[s].setCorr(true);
         }
         else{
-                //send_reply ("t'as pas le bon mdp fdp")
+                send_privmsg(fd, "bad pass");
                 std::cout << "bad pass" << '\n';
         }
         return(0);
@@ -45,12 +53,17 @@ int Server::usercmd(Message &msg, int fd) {
         std::string s(ft_itoa(fd));
 
         //if () user deja register -- >ERR_ALREADYREGISTERED // wrong parameters // pass
-        // if (_m_prefixclient[s].setReg(true);)
+        if (_m_prefixclient[s].getReg()){
+              std::cout << "erreur" << '\n';
+        }
         _m_prefixclient[s].setReg(true);
         std::string prefix;
 
         prefix = _m_prefixclient[s].getUser();
         prefix += "!";
+        prefix += _m_prefixclient[s].getReal();
+        prefix += "@";
+        prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
         //std::string prefix(_m_prefixclient[s].username + "!" + _)
         // tous les champs user ! real @ host
         _m_fdprefix[fd] = prefix;
@@ -72,10 +85,13 @@ int Server::do_cmd(Message msg, int fd){
                 }
                 else if (_m_prefixclient[_m_fdprefix[fd]].getReg() == true)
                 {
-                        // join etc...
+                        if (msg.getCmd() == "BIGLOL"){
+                          std::cout << "reussite" << '\n';
+                        }
                 }
         }
         else {
+                send_privmsg(fd, "Bad cmd");
                 std::cout << "bad cmd" << '\n';
                 //balancer erreur
         }

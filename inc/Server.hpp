@@ -45,6 +45,7 @@ void loop(void);
 void on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd);
 void on_message(std::vector<int>::iterator it_fd, int* ret_val);
 std::string executionner(char buf[5000], Message &message, int fd);
+int send_privmsg(int fd, std::string str);
 
 //getters & setters
 std::vector<Client> getClients(void) const {
