@@ -77,7 +77,7 @@ void Server::loop(void)
                                         /* read incoming data */
                                         std::cout << "Listening from fd-> " << *it_fd << std::endl;
                                         ret_val = recv(*it_fd, _buf, DATA_BUFFER, 0);
-                                        _buf[ret_val] = 0;
+                                        _buf[ret_val - 1] = 0;
                                         if (ret_val == 0)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;

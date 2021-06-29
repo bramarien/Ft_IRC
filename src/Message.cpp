@@ -79,6 +79,7 @@ void Message::parsing_cmd(char buf[5000]) {
         std::string buf_str(buf);
         std::list<std::string> list_temp;
 
+        // buf_str.erase(buf_str.back());
         std::string rhs = split_first_char(buf_str, ':');
         list_temp = split_char(buf_str, ' ');
 

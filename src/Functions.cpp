@@ -4,7 +4,7 @@
 bool Server::nick_check(std::string &nick){
         std::vector<Client>::iterator it = this->_v_clients.begin();
         while(it != this->_v_clients.end()) {
-                if (it->getNick() == nick) {
+                if ((it->getNick() == nick) && (it->getReg() == true)) {
                         return false;
                 }
                 it++;
@@ -14,15 +14,12 @@ bool Server::nick_check(std::string &nick){
 
 int Server::nickcmd(Message msg, int fd){
         std::string s(ft_itoa(fd));
-        if (_m_prefixclient[s].getCorr()) {
-                if (nick_check(msg.getParams().front()) == false) {
-                        std::cout << "Already one" << '\n';
-                }
-                else {
-                        _m_prefixclient[s].setNick(msg.getParams().front());
-                }
+        if (nick_check(msg.getParams().front()) == false) {
+                std::cout << "Already one" << '\n';
         }
-
+        else {
+                _m_prefixclient[s].setNick(msg.getParams().front());
+        }
         return(0);
 }
 
@@ -30,10 +27,16 @@ int Server::passcmd(Message & msg, int fd) {
         std::string s(ft_itoa(fd));
         _m_prefixclient.insert(std::pair<std::string, Client>(s, _v_clients.back()));
         if (msg.getParams().size() >= 2) {
-                //send_reply(fd, "tg c le mauvais");
+                //send_reply(fd, "mauvais params fdp");
+                std::cout << "False params" << '\n';
         }
         else if (msg.getParams().front() == _password) {
+                std::cout << "True pass" << '\n';
                 _m_prefixclient[s].setCorr(true);
+        }
+        else{
+                //send_reply ("t'as pas le bon mdp fdp")
+                std::cout << "bad pass" << '\n';
         }
         return(0);
 }
@@ -42,6 +45,7 @@ int Server::usercmd(Message &msg, int fd) {
         std::string s(ft_itoa(fd));
 
         //if () user deja register -- >ERR_ALREADYREGISTERED // wrong parameters // pass
+        // if (_m_prefixclient[s].setReg(true);)
         _m_prefixclient[s].setReg(true);
         std::string prefix;
 
@@ -59,6 +63,7 @@ int Server::do_cmd(Message msg, int fd){
                 passcmd(msg, fd);
         }
         else if (_m_prefixclient[_m_fdprefix[fd]].getCorr() == true) {
+                std::cout << "good pass, access" << '\n';
                 if (msg.getCmd() == "NICK") {
                         nickcmd(msg, fd);
                 }
@@ -71,7 +76,8 @@ int Server::do_cmd(Message msg, int fd){
                 }
         }
         else {
-          //balancer erreur
+                std::cout << "bad cmd" << '\n';
+                //balancer erreur
         }
         return (0);
 }
