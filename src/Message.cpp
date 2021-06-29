@@ -50,7 +50,7 @@ std::string Message::split_first_char(std::string &str, char separator) {
         else {
                 return("");
         }
-
+        // list_temp.clear();
         return(temp);
 }
 

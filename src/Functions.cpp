@@ -3,7 +3,7 @@
 
 int Server::send_privmsg(int fd, std::string str)
 {
-  return (send(fd, str.c_str(), sizeof(str.c_str()), 0));
+  return (send(fd, str.c_str(), str.size(), 0));
 }
 
 bool Server::nick_check(std::string &nick){
@@ -31,19 +31,19 @@ int Server::nickcmd(Message msg, int fd){
 int Server::passcmd(Message & msg, int fd) {
         std::string s(ft_itoa(fd));
         _m_prefixclient.insert(std::pair<std::string, Client>(s, _v_clients.back()));
+        std::cout << "PASS given : '" << msg.getParams().front() << "'" << '\n';
         if (msg.getParams().size() >= 2)
         {
                 //send_reply(fd, "mauvais params fdp");
-                send_privmsg(fd, "False params");
+                send_privmsg(fd, "False params\n");
                 std::cout << "False params" << '\n';
         }
         else if (msg.getParams().front() == _password) {
-                send_privmsg(fd, "True pass");
-                std::cout << "True pass" << '\n';
+                send_privmsg(fd, "True pass\n");
                 _m_prefixclient[s].setCorr(true);
         }
         else{
-                send_privmsg(fd, "bad pass");
+                send_privmsg(fd, "bad pass\n");
                 std::cout << "bad pass" << '\n';
         }
         return(0);
@@ -91,7 +91,7 @@ int Server::do_cmd(Message msg, int fd){
                 }
         }
         else {
-                send_privmsg(fd, "Bad cmd");
+                send_privmsg(fd, "Bad cmd\n");
                 std::cout << "bad cmd" << '\n';
                 //balancer erreur
         }
