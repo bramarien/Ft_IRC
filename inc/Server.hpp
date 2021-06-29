@@ -5,6 +5,7 @@
 #include "Client.hpp"
 #include <stdlib.h>
 #include <stdio.h>
+#include <sstream>
 
 #define DATA_BUFFER 5000
 
@@ -27,6 +28,7 @@ std::vector<Client> _v_clients;
 std::map<int, std::string> _m_fdprefix; // from fd to prefix ()
 std::map<std::string, Client> _m_prefixclient; // from prefix to definitive clients
 
+std::string   ft_itoa(int nbr);
 public:
 // HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
 std::map<std::string, std::vector<Client*> > chan;
@@ -61,7 +63,7 @@ std::string getPass(void) const {
 //Functions
 
 bool   nick_check(std::string &nick);
-int   nick_fct(Message msg, int fd);
+int   nickcmd(Message msg, int fd);
 int passcmd(Message & msg, int fd);
 int usercmd(Message &msg, int fd);
 int do_cmd(Message msg, int fd);

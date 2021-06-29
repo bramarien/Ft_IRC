@@ -12,14 +12,14 @@ bool Server::nick_check(std::string &nick){
         return true;
 }
 
-int Server::nick_fct(Message msg, int fd){
-        std::string s(itoa(fd));
-        if (_m_prefixclient[s].corr_pass) {
+int Server::nickcmd(Message msg, int fd){
+        std::string s(ft_itoa(fd));
+        if (_m_prefixclient[s].getCorr()) {
                 if (nick_check(msg.getParams().front()) == false) {
                         std::cout << "Already one" << '\n';
                 }
                 else {
-                        _m_prefixclient[s].nickname = msg.getParams().at(0);
+                        _m_prefixclient[s].setNick(msg.getParams().front());
                 }
         }
 
@@ -27,45 +27,48 @@ int Server::nick_fct(Message msg, int fd){
 }
 
 int Server::passcmd(Message & msg, int fd) {
-        std::string s(itoa(fd));
-        if (msg->params.count() >= 2) {
+        std::string s(ft_itoa(fd));
+        _m_prefixclient.insert(std::pair<std::string, Client>(s, _v_clients.back()));
+        if (msg.getParams().size() >= 2) {
                 //send_reply(fd, "tg c le mauvais");
         }
-        else if (msg->params[0] == _password) {
-                _m_prefixclient[s].corr_pass = true;
+        else if (msg.getParams().front() == _password) {
+                _m_prefixclient[s].setCorr(true);
         }
+        return(0);
 }
 
 int Server::usercmd(Message &msg, int fd) {
-        std::string s(itoa(fd));
+        std::string s(ft_itoa(fd));
 
         //if () user deja register -- >ERR_ALREADYREGISTERED // wrong parameters // pass
-        _m_prefixclient[s].is_registered = true;
+        _m_prefixclient[s].setReg(true);
         std::string prefix;
 
-        prefix = _m_prefixclient[s].username;
+        prefix = _m_prefixclient[s].getUser();
         prefix += "!";
         //std::string prefix(_m_prefixclient[s].username + "!" + _)
         // tous les champs user ! real @ host
         _m_fdprefix[fd] = prefix;
         _m_prefixclient[prefix] = _m_prefixclient[_m_fdprefix[fd]];
-
+        return(0);
 }
 
 int Server::do_cmd(Message msg, int fd){
-        if (msg->command == "PASS") {
-                passcmd(fd);
+        if (msg.getCmd() == "PASS") {
+                passcmd(msg, fd);
         }
-        else if ("NICK" ==  msg.getCmd()) {
-                nick_fct();
+        else if (msg.getCmd() == "NICK") {
+                nickcmd(msg, fd);
         }
-        else if (msg->command == "USER") {
-                usercmd(fd);
+        else if (msg.getCmd() == "USER") {
+                usercmd(msg, fd);
         }
-        else if (_m_prefixclient[_m_fdprefix[fd]].is_registered == true)
+        else if (_m_prefixclient[_m_fdprefix[fd]].getReg() == true)
         {
-                // join n
+                // join etc...
         }
+        return (0);
 }
 
 // verif if username already exists
