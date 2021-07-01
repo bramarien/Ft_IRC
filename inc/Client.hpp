@@ -32,7 +32,7 @@ int getFd(void) { return(this->fd); }
 void setReg(bool src) { this->is_registered = src; }
 void setCorr(bool src) { this->corr_pass = src; }
 void setNick(std::string src) { this->nickname = src; }
-void setName(std::string src) { this->username = src; }
+void setUser(std::string src) { this->username = src; }
 void setReal(std::string src) { this->realname = src; }
 void setPass(std::string src) { this->password = src; }
 void setInfo(sockaddr_in src) { this->info = src; }
