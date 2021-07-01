@@ -3,7 +3,7 @@
 
 int Server::send_privmsg(int fd, std::string str)
 {
-  return (send(fd, str.c_str(), str.size(), 0));
+        return (send(fd, str.c_str(), str.size(), 0));
 }
 
 bool Server::nick_check(std::string &nick, int fd){
@@ -11,7 +11,7 @@ bool Server::nick_check(std::string &nick, int fd){
         std::map<std::string, Client>::iterator it = this->_m_prefixclient.begin();
         while(it != this->_m_prefixclient.end()) {
                 std::cout << (it->second.getNick()) << '\n';
-                if ((it->second.getNick() == nick)/* && (it->getReg() == true)*/) {
+                if ((it->second.getNick() == nick) /* && (it->getReg() == true)*/) {
                         return false;
                 }
                 it++;
@@ -31,22 +31,34 @@ int Server::nickcmd(Message msg, int fd){
         return(0);
 }
 
+Client Server::find_CfromFd(int fd){
+        std::vector<Client>::iterator it = _v_clients.begin();
+        for (;it != _v_clients.end(); it++) {
+                if (it->getFd() == fd) {
+                  return(*it);
+                }
+        }
+        return(_v_clients.front());
+}
+
 int Server::passcmd(Message & msg, int fd) {
         std::string s(ft_itoa(fd));
-        _m_prefixclient.insert(std::pair<std::string, Client>(s, _v_clients.back()));
-        if (msg.getParams().size() >= 2)
-        {
-                //send_reply(fd, "mauvais params fdp");
-                send_privmsg(fd, "False params\n");
-                std::cout << "False params" << '\n';
+
+        if (_m_prefixclient[s].getCorr() == false) {
+                if (msg.getParams().size() == 0) {
+                        send_err(fd, ERR_NEEDMOREPARAMS, "PASS :Not enough parameters");
+                }
+                else if (msg.getParams().front() == _password) {
+                        _m_prefixclient.insert(std::pair<std::string, Client>(s, find_CfromFd(fd)));
+                        _m_prefixclient[s].setCorr(true);
+                }
+                else {
+                        send_privmsg(fd, "Wrong Password\n");
+                        std::cout << "bad pass" << '\n';
+                }
         }
-        else if (msg.getParams().front() == _password) {
-                send_privmsg(fd, "True pass\n");
-                _m_prefixclient[s].setCorr(true);
-        }
-        else{
-                send_privmsg(fd, "bad pass\n");
-                std::cout << "bad pass" << '\n';
+        else {
+                send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
         }
         return(0);
 }
@@ -55,8 +67,8 @@ int Server::usercmd(Message &msg, int fd) {
         std::string s(ft_itoa(fd));
 
         //if () user deja register -- >ERR_ALREADYREGISTERED // wrong parameters // pass
-        if (_m_prefixclient[s].getReg()){
-              std::cout << "erreur" << '\n';
+        if (_m_prefixclient[s].getReg()) {
+                std::cout << "erreur" << '\n';
         }
         // nb params
         _m_prefixclient[s].setUser(msg.getParams().front());
@@ -79,6 +91,11 @@ int Server::usercmd(Message &msg, int fd) {
         return(0);
 }
 
+void Server::send_err(int fd, int err, std::string msg) {
+        std::string s(ft_itoa(err));
+        send_privmsg(fd, s+msg);
+}
+
 int Server::do_cmd(Message msg, int fd){
         std::string s(ft_itoa(fd));
         if (msg.getCmd() == "PASS") {
@@ -95,11 +112,11 @@ int Server::do_cmd(Message msg, int fd){
                 else if (_m_prefixclient[_m_fdprefix[fd]].getReg() == true)
                 {
                         std::cout << "entering matrix" << '\n';
-                        if (msg.getCmd() == "BIGLOL"){
-                          std::cout << _m_prefixclient[_m_fdprefix[fd]].getNick() << '\n';
-                          std::cout << _m_prefixclient[_m_fdprefix[fd]].getUser() << '\n';
-                          std::cout << _m_prefixclient[_m_fdprefix[fd]].getReal() << '\n';
-                          std::cout << _m_prefixclient[_m_fdprefix[fd]].getPass() << '\n';
+                        if (msg.getCmd() == "BIGLOL") {
+                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getNick() << '\n';
+                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getUser() << '\n';
+                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getReal() << '\n';
+                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getPass() << '\n';
                         }
 
                 }

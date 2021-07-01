@@ -3,6 +3,7 @@
 #include "main.hpp"
 #include "Message.hpp"
 #include "Client.hpp"
+#include "Replies.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sstream>
@@ -46,6 +47,8 @@ void on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd);
 void on_message(std::vector<int>::iterator it_fd, int* ret_val);
 std::string executionner(char buf[5000], Message &message, int fd);
 int send_privmsg(int fd, std::string str);
+void send_err(int fd, int err, std::string msg);
+Client find_CfromFd(int fd);
 
 //getters & setters
 std::vector<Client> getClients(void) const {
