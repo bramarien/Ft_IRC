@@ -29,7 +29,7 @@ std::vector<Client> _v_clients;
 std::map<int, std::string> _m_fdprefix; // from fd to prefix ()
 std::map<std::string, Client> _m_prefixclient; // from prefix to definitive clients
 
-std::string   ft_itoa(int nbr);
+
 public:
 // HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
 std::map<std::string, std::vector<Client*> > chan;
@@ -40,6 +40,7 @@ Server(Server const & src);
 virtual ~Server();
 Server &  operator=( Server const & rhs );
 
+std::string   ft_itoa(int nbr);
 int create_tcp_server_socket(int port);
 int launch(void);
 void loop(void);

@@ -21,7 +21,10 @@ bool Server::nick_check(std::string &nick, int fd){
 
 int Server::nickcmd(Message msg, int fd){
         std::string s(ft_itoa(fd));
-        if (nick_check(msg.getParams().front(), fd) == false) {
+        if (msg.getParams().size() == 0){
+                send_err(fd, ERR_NONICKNAMEGIVEN, " :No nickname given");
+        }
+        else if (nick_check(msg.getParams().front(), fd) == false) {
                 std::cout << "Already one" << '\n';
         }
         else {
@@ -46,11 +49,12 @@ int Server::passcmd(Message & msg, int fd) {
 
         if (_m_prefixclient[s].getCorr() == false) {
                 if (msg.getParams().size() == 0) {
-                        send_err(fd, ERR_NEEDMOREPARAMS, "PASS :Not enough parameters");
+                        send_err(fd, ERR_NEEDMOREPARAMS, "PASS :Not enough parameters\n");
                 }
                 else if (msg.getParams().front() == _password) {
                         _m_prefixclient.insert(std::pair<std::string, Client>(s, find_CfromFd(fd)));
                         _m_prefixclient[s].setCorr(true);
+                        send_privmsg(fd, "You can now register with NICK then USER.\n");
                 }
                 else {
                         send_privmsg(fd, "Wrong Password\n");
@@ -93,7 +97,7 @@ int Server::usercmd(Message &msg, int fd) {
 
 void Server::send_err(int fd, int err, std::string msg) {
         std::string s(ft_itoa(err));
-        send_privmsg(fd, s+msg);
+        send_privmsg(fd, s + msg);
 }
 
 int Server::do_cmd(Message msg, int fd){
