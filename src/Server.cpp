@@ -109,7 +109,6 @@ void Server::clearClient(int fd) {
         std::vector<Client>::iterator it = _v_clients.begin();
         for (; it != _v_clients.end(); it++) {
                 if (it->getFd() == fd) {
-                        std::cout << "lol" << '\n';
                         _v_clients.erase(it);
                         return;
                 }

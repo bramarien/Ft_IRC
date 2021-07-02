@@ -50,6 +50,7 @@ std::string executionner(char buf[5000], Message &message, int fd);
 int send_privmsg(int fd, std::string str);
 void send_err(int fd, int err, std::string msg);
 Client find_CfromFd(int fd);
+void sendRegistration(int fd, Client &cli);
 
 //getters & setters
 std::vector<Client> getClients(void) const {

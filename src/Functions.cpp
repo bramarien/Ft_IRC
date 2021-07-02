@@ -67,6 +67,10 @@ int Server::passcmd(Message & msg, int fd) {
         return(0);
 }
 
+void Server::sendRegistration(int fd, Client &cli) {
+        cli.setReg(true);
+        send_privmsg(fd, ":irc.example.net 001 " + cli.getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
+}
 int Server::usercmd(Message &msg, int fd) {
         std::string s(ft_itoa(fd));
 
@@ -91,7 +95,7 @@ int Server::usercmd(Message &msg, int fd) {
         std::cout << prefix << '\n';
         _m_fdprefix[fd] = prefix;
         _m_prefixclient[prefix] = _m_prefixclient[s];
-        _m_prefixclient[prefix].setReg(true);
+        sendRegistration(fd, _m_prefixclient[prefix]);
         return(0);
 }
 
