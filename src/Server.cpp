@@ -81,9 +81,10 @@ void Server::loop(void)
                                         if (ret_val == 0)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
-                                                close(*it_fd);
+                                                _m_prefixclient.erase(ft_itoa(*it_fd));
                                                 _socket_fd.erase(it_fd); /* Connection is now closed */
                                                 clearClient(*it_fd);
+                                                close(*it_fd);
                                                 break;
                                         }
                                         if (ret_val > 0)
