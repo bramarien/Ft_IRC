@@ -67,6 +67,7 @@ std::string getPass(void) const {
 
 //Functions
 
+void clearClient(int fd);
 bool   nick_check(std::string &nick, int fd);
 int   nickcmd(Message msg, int fd);
 int passcmd(Message & msg, int fd);

@@ -83,6 +83,7 @@ void Server::loop(void)
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
                                                 close(*it_fd);
                                                 _socket_fd.erase(it_fd); /* Connection is now closed */
+                                                clearClient(*it_fd);
                                                 break;
                                         }
                                         if (ret_val > 0)
@@ -102,6 +103,17 @@ void Server::loop(void)
                         } /* for-loop */
                 } /* (ret_val >= 0) */
         } /* while(1) */
+}
+
+void Server::clearClient(int fd) {
+        std::vector<Client>::iterator it = _v_clients.begin();
+        for (; it != _v_clients.end(); it++) {
+                if (it->getFd() == fd) {
+                        std::cout << "lol" << '\n';
+                        _v_clients.erase(it);
+                        return;
+                }
+        }
 }
 
 int Server::launch(void)
@@ -180,7 +192,7 @@ std::string Server::executionner(char buf[5000], Message &message, int fd)
         return("");
 }
 
-std::string   Server::ft_itoa(int nbr){
+std::string Server::ft_itoa(int nbr){
         std::string s;
         std::stringstream out;
         out << nbr;
