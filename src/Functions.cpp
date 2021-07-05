@@ -21,10 +21,10 @@ bool Server::nick_check(std::string &nick, int fd){
 
 int Server::nickcmd(Message msg, int fd){
         std::string s(ft_itoa(fd));
-        if (msg.getParams().size() == 0){
+        if (msg.getParams().size() == 0) {
                 send_err(fd, ERR_NONICKNAMEGIVEN, " :No nickname given\n");
         }
-        else if (msg.getParams().front() == _m_prefixclient[s].getNick()){
+        else if (msg.getParams().front() == _m_prefixclient[s].getNick()) {
                 send_err(fd, ERR_NICKNAMEINUSE, " <" + msg.getParams().front() +"> :Nickname is already in use\n");
         }
         else if (nick_check(msg.getParams().front(), fd) == false) {
@@ -39,9 +39,9 @@ int Server::nickcmd(Message msg, int fd){
 
 Client Server::find_CfromFd(int fd){
         std::vector<Client>::iterator it = _v_clients.begin();
-        for (;it != _v_clients.end(); it++) {
+        for (; it != _v_clients.end(); it++) {
                 if (it->getFd() == fd) {
-                  return(*it);
+                        return(*it);
                 }
         }
         return(_v_clients.front());
@@ -75,36 +75,102 @@ int Server::usercmd(Message &msg, int fd) {
 
         //if () user deja register -- >ERR_ALREADYREGISTERED // wrong parameters // pass
         if (msg.getParams().size() == 4) {
-          if (_m_prefixclient[s].getReg() == false){
-                if (_m_prefixclient[s].getReg()) {
-                        std::cout << "erreur" << '\n';
+                if (_m_prefixclient[s].getReg() == false) {
+                        if (_m_prefixclient[s].getReg()) {
+                                std::cout << "erreur" << '\n';
+                        }
+                        // nb params
+                        _m_prefixclient[s].setUser(msg.getParams().front());
+                        _m_prefixclient[s].setReal(msg.getParams().back());
+                        std::string prefix;
+
+
+                        prefix = _m_prefixclient[s].getUser();
+                        prefix += "!";
+                        prefix += _m_prefixclient[s].getReal();
+                        std::cout << _m_prefixclient[s].getReal() << '\n';
+                        prefix += "@";
+                        prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
+                        //std::string prefix(_m_prefixclient[s].username + "!" + _)
+                        // tous les champs user ! real @ host
+                        std::cout << prefix << '\n';
+                        _m_fdprefix[fd] = prefix;
+                        _m_prefixclient[prefix] = _m_prefixclient[s];
+                        send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
+                        _m_prefixclient[prefix].setReg(true);
                 }
-                // nb params
-                _m_prefixclient[s].setUser(msg.getParams().front());
-                _m_prefixclient[s].setReal(msg.getParams().back());
-                std::string prefix;
-
-
-                prefix = _m_prefixclient[s].getUser();
-                prefix += "!";
-                prefix += _m_prefixclient[s].getReal();
-                std::cout << _m_prefixclient[s].getReal() << '\n';
-                prefix += "@";
-                prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
-                //std::string prefix(_m_prefixclient[s].username + "!" + _)
-                // tous les champs user ! real @ host
-                std::cout << prefix << '\n';
-                _m_fdprefix[fd] = prefix;
-                _m_prefixclient[prefix] = _m_prefixclient[s];
-                send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
-                _m_prefixclient[prefix].setReg(true);
-          }
-          else{
-            send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
-          }
+                else{
+                        send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
+                }
         }
         else {
-          send_err(fd, ERR_NEEDMOREPARAMS, " <USER> :Not enough parameters\n");
+                send_err(fd, ERR_NEEDMOREPARAMS, " <USER> :Not enough parameters\n");
+        }
+        return(0);
+}
+
+bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
+{
+        std::vector<Client*>::iterator it = vect.begin();
+        for(; it != vect.end(); it++) {
+                if((**it).getNick() == _m_prefixclient[_m_fdprefix[fd]].getNick())
+                        return(true);
+        }
+        return(false);
+}
+
+int Server::joincmd(Message &msg, int fd)
+{
+        //s'occuper de l'acces a plusieurs canal en meme temps
+
+        std::string chan_name = msg.getParams().front();
+        if(msg.getParams().size() <= 2 && msg.getParams().size() >= 1) {
+                if (chan_name[0] == '#' )
+                {
+                        if (chan.find(chan_name) != chan.end())
+                        {
+                                if (find_Cinchan(fd, chan.find(chan_name)->second) != true)
+                                {
+                                        if (chan_flag[chan_name].find("+i") != chan_flag[chan_name].npos) { //A FINIR CA
+                                                //gestion invites
+                                                send_privmsg(fd, "chan is on invite only\n");
+                                        }
+                                        else if ((chan_pass.find(msg.getParams().front()) != chan_pass.end()) &&  (chan_pass.find(msg.getParams().front())->second == msg.getParams().back()))
+                                        {
+                                                Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
+                                                chan.find(chan_name)->second.push_back(temp);
+                                                send_privmsg(fd, "added to chan " + chan_name + "\n");
+                                        }
+                                        else {
+                                                send_privmsg(fd, "please give correct chanels password\n");
+                                        }
+                                }
+                                else{
+                                        send_privmsg(fd, "already in said chan\n");
+                                }
+                                //sur invite ?
+                                //est ce que le gars est ban/kick ?
+                        }
+                        else{
+                                Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
+                                std::vector<Client *> _v_cli_tmp;
+                                _v_cli_tmp.push_back(temp);
+                                chan[chan_name] = _v_cli_tmp;
+                                if (msg.getParams().size() == 2) { //creation d'un chan a mdp
+                                        chan_flag[chan_name] = "+m";
+                                        chan_pass[chan_name] = msg.getParams().back();
+                                }
+                                else
+                                        chan_flag[chan_name] = "";
+                                send_privmsg(fd, "Created and added to chan " + chan_name + "\n");
+                        }
+                }
+                else{
+                        send_privmsg(fd, "chan must begin by #\n");
+                }
+        }
+        else{
+                send_privmsg(fd, "please give good amount of parameters\n");
         }
         return(0);
 }
@@ -136,10 +202,13 @@ int Server::do_cmd(Message msg, int fd){
                                 std::cout << _m_prefixclient[_m_fdprefix[fd]].getReal() << '\n';
                                 std::cout << _m_prefixclient[_m_fdprefix[fd]].getPass() << '\n';
                         }
+                        else if (msg.getCmd() == "JOIN") {
+                                joincmd(msg, fd);
+                        }
 
                 }
                 else
-                  send_privmsg(fd, "Bad cmd\n");
+                        send_privmsg(fd, "Bad cmd\n");
         }
         else {
                 send_privmsg(fd, "Bad cmd\n");
