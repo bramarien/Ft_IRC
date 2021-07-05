@@ -33,7 +33,7 @@ std::map<std::string, Client> _m_prefixclient; // from prefix to definitive clie
 public:
 // HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
 std::map<std::string, std::vector<Client*> > chan;
-//std::map<std::map<std::string, std::vector<Client*>>, std::string> chan_flag;
+//std::map<std::string, std::string> chan_flag;
 
 Server(int port, std::string pass);
 Server(Server const & src);
@@ -50,7 +50,6 @@ std::string executionner(char buf[5000], Message &message, int fd);
 int send_privmsg(int fd, std::string str);
 void send_err(int fd, int err, std::string msg);
 Client find_CfromFd(int fd);
-void sendRegistration(int fd, Client &cli);
 
 //getters & setters
 std::vector<Client> getClients(void) const {

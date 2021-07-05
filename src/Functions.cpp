@@ -22,13 +22,16 @@ bool Server::nick_check(std::string &nick, int fd){
 int Server::nickcmd(Message msg, int fd){
         std::string s(ft_itoa(fd));
         if (msg.getParams().size() == 0){
-                send_err(fd, ERR_NONICKNAMEGIVEN, " :No nickname given");
+                send_err(fd, ERR_NONICKNAMEGIVEN, " :No nickname given\n");
+        }
+        else if (msg.getParams().front() == _m_prefixclient[s].getNick()){
+                send_err(fd, ERR_NICKNAMEINUSE, " <" + msg.getParams().front() +"> :Nickname is already in use\n");
         }
         else if (nick_check(msg.getParams().front(), fd) == false) {
-                std::cout << "Already one" << '\n';
+                send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\n");
         }
         else {
-                std::cout << "it's ok" << '\n';
+                send_privmsg(fd, "Nick has been registered -- <" + msg.getParams().front() + ">\n");
                 _m_prefixclient[s].setNick(msg.getParams().front());
         }
         return(0);
@@ -49,7 +52,7 @@ int Server::passcmd(Message & msg, int fd) {
 
         if (_m_prefixclient[s].getCorr() == false) {
                 if (msg.getParams().size() == 0) {
-                        send_err(fd, ERR_NEEDMOREPARAMS, "PASS :Not enough parameters\n");
+                        send_err(fd, ERR_NEEDMOREPARAMS, " PASS :Not enough parameters\n");
                 }
                 else if (msg.getParams().front() == _password) {
                         _m_prefixclient.insert(std::pair<std::string, Client>(s, find_CfromFd(fd)));
@@ -67,35 +70,42 @@ int Server::passcmd(Message & msg, int fd) {
         return(0);
 }
 
-void Server::sendRegistration(int fd, Client &cli) {
-        cli.setReg(true);
-        send_privmsg(fd, ":irc.example.net 001 " + cli.getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
-}
 int Server::usercmd(Message &msg, int fd) {
         std::string s(ft_itoa(fd));
 
         //if () user deja register -- >ERR_ALREADYREGISTERED // wrong parameters // pass
-        if (_m_prefixclient[s].getReg()) {
-                std::cout << "erreur" << '\n';
+        if (msg.getParams().size() == 4) {
+          if (_m_prefixclient[s].getReg() == false){
+                if (_m_prefixclient[s].getReg()) {
+                        std::cout << "erreur" << '\n';
+                }
+                // nb params
+                _m_prefixclient[s].setUser(msg.getParams().front());
+                _m_prefixclient[s].setReal(msg.getParams().back());
+                std::string prefix;
+
+
+                prefix = _m_prefixclient[s].getUser();
+                prefix += "!";
+                prefix += _m_prefixclient[s].getReal();
+                std::cout << _m_prefixclient[s].getReal() << '\n';
+                prefix += "@";
+                prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
+                //std::string prefix(_m_prefixclient[s].username + "!" + _)
+                // tous les champs user ! real @ host
+                std::cout << prefix << '\n';
+                _m_fdprefix[fd] = prefix;
+                _m_prefixclient[prefix] = _m_prefixclient[s];
+                send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
+                _m_prefixclient[prefix].setReg(true);
+          }
+          else{
+            send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
+          }
         }
-        // nb params
-        _m_prefixclient[s].setUser(msg.getParams().front());
-        _m_prefixclient[s].setReal(msg.getParams().back());
-        std::string prefix;
-
-
-        prefix = _m_prefixclient[s].getUser();
-        prefix += "!";
-        prefix += _m_prefixclient[s].getReal();
-        std::cout << _m_prefixclient[s].getReal() << '\n';
-        prefix += "@";
-        prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
-        //std::string prefix(_m_prefixclient[s].username + "!" + _)
-        // tous les champs user ! real @ host
-        std::cout << prefix << '\n';
-        _m_fdprefix[fd] = prefix;
-        _m_prefixclient[prefix] = _m_prefixclient[s];
-        sendRegistration(fd, _m_prefixclient[prefix]);
+        else {
+          send_err(fd, ERR_NEEDMOREPARAMS, " <USER> :Not enough parameters\n");
+        }
         return(0);
 }
 
@@ -128,6 +138,8 @@ int Server::do_cmd(Message msg, int fd){
                         }
 
                 }
+                else
+                  send_privmsg(fd, "Bad cmd\n");
         }
         else {
                 send_privmsg(fd, "Bad cmd\n");

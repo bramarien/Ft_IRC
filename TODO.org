@@ -1,11 +1,13 @@
-server quit when a client leave
+Pour les channels on fait pas compliquer, regarde dans le Server.hpp
+Tu as la map chan, ca fonctionne avec une string et les clients
+Essayer de direct bien Parser la CMD JOIN avec les send_err()
+Si tu parviens a avoir quelque chose de fonctionnel essaye d'implementer les channels sur invitation ou avec mot de passe
 
-command example :
+et il ne nous resteras plus que un ajout qui sera les Operateurs :D
+Allé bon courage
+PASS NICK USER sont gérer avec les codes d'erreur,
+J'ai trouvé un crash que j'arrive a reproduire mais je comprend pas d'ou il sort..
+on verra ca plus tard c'est vraiment spécifique comme cas.
 
-NICK amy
-
-USER amy * *:Amy Pond (le texte apres les : est garder tel quel)
-
-PRIVMSG amy :Yes?
-
-Pridf dkfn sjdfn :ksdfnusdnfkjnsds as dfasdf : sdfjsndfjn
+2ème chose, il y a une duplications des utilisateurs, NICK et USER utilise pas les meme emplacements dans la map pour _m_prefixclient[]
+Ce qui fait que 2 clients existe pour un seul gars et on a donc une duplication des pseudo, on verra pour s'accorder sur quel emplacement utiliser dans la map pour les clients
