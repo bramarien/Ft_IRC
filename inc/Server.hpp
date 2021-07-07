@@ -68,6 +68,8 @@ std::string getPass(void) const {
 
 //Functions
 
+void sendtoAll(std::vector<Client*> at, std::string &msg);
+void privmsg(Message &msg, int fd);
 void clearClient(int fd);
 bool   nick_check(std::string &nick, int fd);
 int   nickcmd(Message msg, int fd);
