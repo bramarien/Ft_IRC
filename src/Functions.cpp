@@ -122,20 +122,16 @@ bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
 int Server::joincmd(Message &msg, int fd)
 {
         //s'occuper de l'acces a plusieurs canal en meme temps
-
+        // std::list<std::string> chan_list = msg.getParams().front().split_char()
         std::string chan_name = msg.getParams().front();
         if(msg.getParams().size() <= 2 && msg.getParams().size() >= 1) {
-                if (chan_name[0] == '#' )
+                if (chan_name[0] == '#')
                 {
                         if (chan.find(chan_name) != chan.end())
                         {
                                 if (find_Cinchan(fd, chan.find(chan_name)->second) != true)
                                 {
-                                        if (chan_flag[chan_name].find("+i") != chan_flag[chan_name].npos) { //A FINIR CA
-                                                //gestion invites
-                                                send_privmsg(fd, "chan is on invite only\n");
-                                        }
-                                        else if ((chan_pass.find(msg.getParams().front()) != chan_pass.end()) &&  (chan_pass.find(msg.getParams().front())->second == msg.getParams().back()))
+                                        if ((chan_pass.find(msg.getParams().front()) != chan_pass.end()) || (chan_pass.find(msg.getParams().front())->second == msg.getParams().back()))
                                         {
                                                 Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
                                                 chan.find(chan_name)->second.push_back(temp);
@@ -213,7 +209,7 @@ int Server::do_cmd(Message msg, int fd){
         else {
                 send_privmsg(fd, "Bad cmd\n");
                 std::cout << "bad cmd" << '\n';
-                //join privmsg(#chan || nick) OPER-> KILL LUSER(info serv) HELP
+                //join privmsg(#chan || nick) OPER-> KILL LUSER(info serv) HELP  - NOTICE
         }
         return (0);
 }

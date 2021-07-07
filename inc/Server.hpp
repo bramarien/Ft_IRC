@@ -76,6 +76,7 @@ int usercmd(Message &msg, int fd);
 int do_cmd(Message msg, int fd);
 int joincmd(Message &msg, int fd);
 bool  find_Cinchan(int fd, std::vector<Client*> vect);
+std::list<std::string> split_char(std::string str, char separator);
 };
 
 // std::ostream &			operator<<( std::ostream & o, Server const & i );

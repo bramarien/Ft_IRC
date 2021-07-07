@@ -47,6 +47,7 @@ void Server::loop(void)
                 ret_val = select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL);
 
                 /* select() woke up. Identify the fd that has events */
+                std::cout << "ret_val: " << ret_val << '\n';
                 if (ret_val >= 0)
                 {
                         std::cout << "Return of select : " << ret_val << std::endl;
@@ -83,9 +84,10 @@ void Server::loop(void)
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
                                                 _m_prefixclient.erase(ft_itoa(*it_fd));
                                                 _m_fdprefix.erase(*it_fd);
-                                                _socket_fd.erase(it_fd); /* Connection is now closed */
                                                 clearClient(*it_fd);
                                                 close(*it_fd);
+                                                FD_CLR(*it_fd, &read_fd_set);
+                                                _socket_fd.erase(it_fd); /* Connection is now closed */
                                                 break;
                                         }
                                         if (ret_val > 0)
@@ -199,4 +201,25 @@ std::string Server::ft_itoa(int nbr){
         out << nbr;
         s = out.str();
         return(s);
+}
+
+std::list<std::string> Server::split_char(std::string str, char separator) {
+        size_t pos = 0;
+        std::list<std::string> list_temp;
+
+        while ((pos = str.find(separator)) != std::string::npos)
+        {
+                std::string temp = str.substr(0, pos);
+                if (temp.length() != 0) {
+                        list_temp.push_back(temp);
+                }
+                str = str.erase(0, pos + 1);
+        }
+        if (pos == std::string::npos) {
+                std::string temp = str.substr(0, pos);
+                if (temp.length() != 0) {
+                        list_temp.push_back(temp);
+                }
+        }
+        return(list_temp);
 }
