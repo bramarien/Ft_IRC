@@ -121,47 +121,49 @@ bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
 
 void Server::sendtoAll(std::vector<Client*> at, std::string &msg)
 {
-  std::cout << "sendto all\n";
+        std::cout << "sendto all\n";
 }
 
 void Server::privmsg(Message &msg, int fd)
 {
         if (msg.getParams().size() == 2) {
-          if (msg.getParams().front().find(',') != std::string::npos) {
-                if (msg.getParams().front().find('#') != std::string::npos) {
-                  if (chan.find(msg.getParams().front()) != chan.end()) {
-                    sendtoAll(chan[msg.getParams().front()], msg.getParams().back());
-                  }
+                if (msg.getParams().front().find(',') != std::string::npos) {
+                        if (msg.getParams().front().find('#') != std::string::npos) {
+                                if (chan.find(msg.getParams().front()) != chan.end()) {
+                                        sendtoAll(chan[msg.getParams().front()], msg.getParams().back());
+                                }
+                        }
+                        else {
+                                std::vector<Client>::iterator clients = _v_clients.begin();
+                                for (; clients != _v_clients.end(); clients++) {
+                                        if (clients->getFd() == fd)
+                                                continue;
+                                        else if (clients->getNick() == msg.getParams().front()) {
+                                                send_privmsg(clients->getFd(), msg.getParams().back() + "\n");
+                                        }
+                                }
+                        }
                 }
                 else {
-                  std::vector<Client>::iterator clients = _v_clients.begin();
-                  for (; clients != _v_clients.end(); clients++) {
-                    if (clients->getFd() == fd)
-                      continue ;
-                    else if (clients->getNick() == msg.getParams().front()) {
-                      send_privmsg(clients->getFd(), msg.getParams().back() + "\n");
-                    }
-                  }
-                }
-          }
-          else {
 
-          }
+                }
         }
 }
 
 int Server::joincmd(Message &msg, int fd)
 {
         //s'occuper de l'acces a plusieurs canal en meme temps
-        std::list<std::string> chan_list = split_char(msg.getParams().front(), ",");
-        std::list<std::string> pass_list = split_char(msg.getParams().back(), ",");
+        //commencer par verifier nombre de parametres
+        std::list<std::string> chan_list = split_every_char(msg.getParams().front(), ',');
+        std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
         std::list<std::string>::iterator it_chan = chan_list.begin();
         std::list<std::string>::iterator it_pass = pass_list.begin();
 
         while((it_chan != chan_list.end()) && (it_pass != pass_list.end()))
         {
+                std::cout << "chan name: " << *it_chan << '\n';
                 std::string chan_name = *it_chan;
-                size_t      size = msg.getParams().size();
+                size_t size = msg.getParams().size();
                 if(size <= 2 && size >= 1) {
                         if (chan_name[0] == '#')
                         {
@@ -169,8 +171,15 @@ int Server::joincmd(Message &msg, int fd)
                                 {
                                         if (find_Cinchan(fd, chan.find(chan_name)->second) != true)
                                         {
-                                                if ((chan_pass.find(msg.getParams().front()) != chan_pass.end()) || (chan_pass.find(msg.getParams().front())->second == msg.getParams().back()))
+                                                if (chan_pass.find(msg.getParams().front()) == chan_pass.end())
                                                 {
+                                                  std::cout << "1" << '\n';
+                                                        Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
+                                                        chan.find(chan_name)->second.push_back(temp);
+                                                        send_privmsg(fd, "added to chan " + chan_name + "\n");
+                                                }
+                                                else if((chan_pass.find(msg.getParams().front())->second == *it_pass)) {
+                                                  std::cout << "2" << '\n';
                                                         Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
                                                         chan.find(chan_name)->second.push_back(temp);
                                                         send_privmsg(fd, "added to chan " + chan_name + "\n");
@@ -191,11 +200,10 @@ int Server::joincmd(Message &msg, int fd)
                                         _v_cli_tmp.push_back(temp);
                                         chan[chan_name] = _v_cli_tmp;
                                         if (size == 2) { //creation d'un chan a mdp
+                                                std::cout << "mdp created" << '\n';
                                                 chan_flag[chan_name] = "+m";
                                                 chan_pass[chan_name] = msg.getParams().back();
                                         }
-                                        else
-                                                chan_flag[chan_name] = "";
                                         send_privmsg(fd, "Created and added to chan " + chan_name + "\n");
                                 }
                         }

@@ -34,7 +34,7 @@ ACTIVES_FLAGS = $(CFLAGSSAN) $(CFLAGSPROD)
 OBJS = ${SRCS:.cpp=.o}
 
 $(NAME):	$(OBJS) $(INCLUDES)
-					$(CC) $(CFLAGSSAN) $(OBJS) -o $(NAME)
+					$(CC) $(CFLAGS) $(CFLAGSSAN) $(OBJS) -o $(NAME)
 
 $(OBJS):	$(INCLUDES)
 

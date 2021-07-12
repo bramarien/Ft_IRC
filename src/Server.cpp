@@ -203,16 +203,14 @@ std::string Server::ft_itoa(int nbr){
         return(s);
 }
 
-std::list<std::string> Server::split_char(std::string str, char separator) {
+std::list<std::string> Server::split_every_char(std::string str, char separator) {
         size_t pos = 0;
         std::list<std::string> list_temp;
 
         while ((pos = str.find(separator)) != std::string::npos)
         {
                 std::string temp = str.substr(0, pos);
-                if (temp.length() != 0) {
-                        list_temp.push_back(temp);
-                }
+                list_temp.push_back(temp);
                 str = str.erase(0, pos + 1);
         }
         if (pos == std::string::npos) {
