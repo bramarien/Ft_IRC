@@ -127,27 +127,35 @@ void Server::sendtoAll(std::vector<Client*> at, std::string &msg)
 void Server::privmsg(Message &msg, int fd)
 {
         if (msg.getParams().size() == 2) {
+                std::cout << "privmsg" << std::endl;
                 std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
                 std::list<std::string>::iterator it_recv = receiver_list.begin();
                 while(it_recv != receiver_list.end())
                 {
+                    std::cout << "it_recv -> " << *it_recv << std::endl;
                         if ((*it_recv)[0] == '#') {
                                 if (chan.find(*it_recv) != chan.end()) {
                                         sendtoAll(chan[*it_recv], msg.getParams().back());
                                 }
                         }
                         else {
-                                std::vector<Client>::iterator clients = _v_clients.begin();
-                                for (; clients != _v_clients.end(); clients++) {
-                                        if (clients->getFd() == fd)
+                          std::cout << "searching for clients" << '\n';
+                                std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
+                                for (; it_clients != _m_prefixclient.end(); it_clients++) {
+                                        std::cout << "cur client ->" << (*it_clients).second.getNick() << '\n';
+                                        if (it_clients->second.getFd() == fd)
                                                 continue;
-                                        else if (clients->getNick() == *it_recv) {
-                                                send_privmsg(clients->getFd(), msg.getParams().back() + "\n");
+                                        else if (it_clients->second.getNick() == *it_recv) {
+                                                std::cout << "sending message to ->" << it_clients->second.getNick() << std::endl;
+                                                send_privmsg(it_clients->second.getFd(), msg.getParams().back() + "\n");
                                         }
                                 }
                         }
                         it_recv++;
                 }
+        }
+        else {
+          std::cout << "needs 2 params" << '\n';
         }
 }
 
@@ -156,10 +164,11 @@ int Server::joincmd(Message &msg, int fd)
         //s'occuper de l'acces a plusieurs canal en meme temps
         //commencer par verifier nombre de parametres
         std::list<std::string> chan_list = split_every_char(msg.getParams().front(), ',');
-        std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
         std::list<std::string>::iterator it_chan = chan_list.begin();
+        // bool passes = (msg.getParams().size() == 2) ? true : false;
+        std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
         std::list<std::string>::iterator it_pass = pass_list.begin();
-
+        //send message to all users once someone is
         while((it_chan != chan_list.end()) && (it_pass != pass_list.end()))
         {
                 std::cout << "chan name: " << *it_chan << '\n';
@@ -244,7 +253,9 @@ int Server::do_cmd(Message msg, int fd){
                         else if (msg.getCmd() == "JOIN") {
                                 joincmd(msg, fd);
                         }
-
+                        else if (msg.getCmd() == "PRIVMSG") {
+                                privmsg(msg, fd);
+                        }
                 }
                 else
                         send_privmsg(fd, "Bad cmd\n");
