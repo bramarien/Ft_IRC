@@ -98,6 +98,7 @@ int Server::usercmd(Message &msg, int fd) {
                         _m_prefixclient[prefix] = _m_prefixclient[s];
                         send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
                         _m_prefixclient[prefix].setReg(true);
+                        _m_prefixclient[prefix].setFd(fd);
                 }
                 else{
                         send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
@@ -147,8 +148,10 @@ void Server::privmsg(Message &msg, int fd)
                                                 continue;
                                         else if (it_clients->second.getNick() == *it_recv) {
                                                 std::cout << "sending message to ->" << it_clients->second.getNick() << std::endl;
+                                                std::cout << "sending message to fd ->" << it_clients->second.getFd() << std::endl;
                                                 send_privmsg(it_clients->second.getFd(), msg.getParams().back() + "\n");
                                         }
+
                                 }
                         }
                         it_recv++;
@@ -165,7 +168,6 @@ int Server::joincmd(Message &msg, int fd)
         //commencer par verifier nombre de parametres
         std::list<std::string> chan_list = split_every_char(msg.getParams().front(), ',');
         std::list<std::string>::iterator it_chan = chan_list.begin();
-        // bool passes = (msg.getParams().size() == 2) ? true : false;
         std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
         std::list<std::string>::iterator it_pass = pass_list.begin();
         //send message to all users once someone is
@@ -202,7 +204,7 @@ int Server::joincmd(Message &msg, int fd)
                                         std::vector<Client *> _v_cli_tmp;
                                         _v_cli_tmp.push_back(temp);
                                         chan[chan_name] = _v_cli_tmp;
-                                        if (*it_pass != "") { //creation d'un chan a mdp
+                                        if ((msg.getParams().size() == 2) && (*it_pass != "")) { //creation d'un chan a mdp
                                                 std::cout << "mdp created" << '\n';
                                                 chan_flag[chan_name] = "+m";
                                                 chan_pass[chan_name] = msg.getParams().back();
@@ -244,13 +246,7 @@ int Server::do_cmd(Message msg, int fd){
                 else if (_m_prefixclient[_m_fdprefix[fd]].getReg() == true)
                 {
                         std::cout << "entering matrix" << '\n';
-                        if (msg.getCmd() == "BIGLOL") {
-                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getNick() << '\n';
-                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getUser() << '\n';
-                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getReal() << '\n';
-                                std::cout << _m_prefixclient[_m_fdprefix[fd]].getPass() << '\n';
-                        }
-                        else if (msg.getCmd() == "JOIN") {
+                        if (msg.getCmd() == "JOIN") {
                                 joincmd(msg, fd);
                         }
                         else if (msg.getCmd() == "PRIVMSG") {
