@@ -171,15 +171,8 @@ int Server::joincmd(Message &msg, int fd)
                                 {
                                         if (find_Cinchan(fd, chan.find(chan_name)->second) != true)
                                         {
-                                                if (chan_pass.find(msg.getParams().front()) == chan_pass.end())
+                                                if ((chan_pass.find(msg.getParams().front()) == chan_pass.end()) || (chan_pass.find(msg.getParams().front())->second == *it_pass))
                                                 {
-                                                  std::cout << "1" << '\n';
-                                                        Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
-                                                        chan.find(chan_name)->second.push_back(temp);
-                                                        send_privmsg(fd, "added to chan " + chan_name + "\n");
-                                                }
-                                                else if((chan_pass.find(msg.getParams().front())->second == *it_pass)) {
-                                                  std::cout << "2" << '\n';
                                                         Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
                                                         chan.find(chan_name)->second.push_back(temp);
                                                         send_privmsg(fd, "added to chan " + chan_name + "\n");
@@ -199,7 +192,7 @@ int Server::joincmd(Message &msg, int fd)
                                         std::vector<Client *> _v_cli_tmp;
                                         _v_cli_tmp.push_back(temp);
                                         chan[chan_name] = _v_cli_tmp;
-                                        if (size == 2) { //creation d'un chan a mdp
+                                        if (*it_pass != "") { //creation d'un chan a mdp
                                                 std::cout << "mdp created" << '\n';
                                                 chan_flag[chan_name] = "+m";
                                                 chan_pass[chan_name] = msg.getParams().back();
