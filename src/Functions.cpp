@@ -127,10 +127,13 @@ void Server::sendtoAll(std::vector<Client*> at, std::string &msg)
 void Server::privmsg(Message &msg, int fd)
 {
         if (msg.getParams().size() == 2) {
-                if (msg.getParams().front().find(',') != std::string::npos) {
-                        if (msg.getParams().front().find('#') != std::string::npos) {
-                                if (chan.find(msg.getParams().front()) != chan.end()) {
-                                        sendtoAll(chan[msg.getParams().front()], msg.getParams().back());
+                std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
+                std::list<std::string>::iterator it_recv = receiver_list.begin();
+                while(it_recv != receiver_list.end())
+                {
+                        if ((*it_recv)[0] == '#') {
+                                if (chan.find(*it_recv) != chan.end()) {
+                                        sendtoAll(chan[*it_recv], msg.getParams().back());
                                 }
                         }
                         else {
@@ -138,14 +141,12 @@ void Server::privmsg(Message &msg, int fd)
                                 for (; clients != _v_clients.end(); clients++) {
                                         if (clients->getFd() == fd)
                                                 continue;
-                                        else if (clients->getNick() == msg.getParams().front()) {
+                                        else if (clients->getNick() == *it_recv) {
                                                 send_privmsg(clients->getFd(), msg.getParams().back() + "\n");
                                         }
                                 }
                         }
-                }
-                else {
-
+                        it_recv++;
                 }
         }
 }
