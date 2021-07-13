@@ -122,13 +122,33 @@ bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
 
 void Server::sendtoAll(std::vector<Client*> at, std::string &msg)
 {
-        std::cout << "sendto all\n";
+  std::vector<Client*>::iterator client = at.begin();
+  for (; client != at.end(); client++) {
+    Client to_send = *(*client);
+    send_privmsg(to_send.getFd(), msg + "\n");
+  }
+
+}
+
+std::string Server::getmsg(Message &msg, int fd)
+{
+  std::list<std::string> params = msg.getParams();
+  std::string msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
+  std::list<std::string>::iterator it = params.begin();
+  it++;
+  for (; it != params.end(); it++) {
+    std::string tmp = *it;
+    std::cout << "tmp ->" << tmp << std::endl;
+    msg_tosend.append(tmp + " ");
+  }
+  return (msg_tosend);
 }
 
 void Server::privmsg(Message &msg, int fd)
 {
-        if (msg.getParams().size() == 2) {
+        if (msg.getParams().size() >= 2) {
                 std::cout << "privmsg" << std::endl;
+                std::string msg_tosend = getmsg(msg, fd);
                 std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
                 std::list<std::string>::iterator it_recv = receiver_list.begin();
                 while(it_recv != receiver_list.end())
@@ -136,7 +156,7 @@ void Server::privmsg(Message &msg, int fd)
                     std::cout << "it_recv -> " << *it_recv << std::endl;
                         if ((*it_recv)[0] == '#') {
                                 if (chan.find(*it_recv) != chan.end()) {
-                                        sendtoAll(chan[*it_recv], msg.getParams().back());
+                                        sendtoAll(chan[*it_recv], msg_tosend);
                                 }
                         }
                         else {
@@ -149,7 +169,7 @@ void Server::privmsg(Message &msg, int fd)
                                         else if (it_clients->second.getNick() == *it_recv) {
                                                 std::cout << "sending message to ->" << it_clients->second.getNick() << std::endl;
                                                 std::cout << "sending message to fd ->" << it_clients->second.getFd() << std::endl;
-                                                send_privmsg(it_clients->second.getFd(), msg.getParams().back() + "\n");
+                                                send_privmsg(it_clients->second.getFd(), msg_tosend + "\n");
                                         }
 
                                 }

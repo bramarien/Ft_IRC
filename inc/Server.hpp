@@ -52,6 +52,7 @@ int send_privmsg(int fd, std::string str);
 void send_err(int fd, int err, std::string msg);
 Client find_CfromFd(int fd);
 
+
 //getters & setters
 std::vector<Client> getClients(void) const {
         return(this->_v_clients);
@@ -68,6 +69,7 @@ std::string getPass(void) const {
 
 //Functions
 
+std::string getmsg(Message &msg, int fd);
 void sendtoAll(std::vector<Client*> at, std::string &msg);
 void privmsg(Message &msg, int fd);
 void clearClient(int fd);
