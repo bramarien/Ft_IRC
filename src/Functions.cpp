@@ -120,7 +120,7 @@ bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
         return(false);
 }
 
-void Server::sendtoAll(std::vector<Client*> at, std::string &msg)
+void Server::sendtoAll(std::vector<Client*> at, std::string msg)
 {
   std::vector<Client*>::iterator client = at.begin();
   for (; client != at.end(); client++) {
@@ -158,17 +158,17 @@ void Server::privmsg(Message &msg, int fd)
                                 if (chan.find(*it_recv) != chan.end()) {
                                         sendtoAll(chan[*it_recv], msg_tosend);
                                 }
+                                else {
+                                        send_err(fd, ERR_CANNOTSENDTOCHAN, "<" + *it_recv + "> :Cannot send to channel\n");
+                                }
                         }
                         else {
                           std::cout << "searching for clients" << '\n';
                                 std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
                                 for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                                        std::cout << "cur client ->" << (*it_clients).second.getNick() << '\n';
                                         if (it_clients->second.getFd() == fd)
                                                 continue;
                                         else if (it_clients->second.getNick() == *it_recv) {
-                                                std::cout << "sending message to ->" << it_clients->second.getNick() << std::endl;
-                                                std::cout << "sending message to fd ->" << it_clients->second.getFd() << std::endl;
                                                 send_privmsg(it_clients->second.getFd(), msg_tosend + "\n");
                                         }
 
@@ -178,7 +178,8 @@ void Server::privmsg(Message &msg, int fd)
                 }
         }
         else {
-          std::cout << "needs 2 params" << '\n';
+          send_err(fd, ERR_NOTEXTTOSEND, " :No text to send     or     ");
+          send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick/channel\n");
         }
 }
 
@@ -193,7 +194,6 @@ int Server::joincmd(Message &msg, int fd)
         //send message to all users once someone is
         while((it_chan != chan_list.end()) && (it_pass != pass_list.end()))
         {
-                std::cout << "chan name: " << *it_chan << '\n';
                 std::string chan_name = *it_chan;
                 size_t size = msg.getParams().size();
                 if(size <= 2 && size >= 1) {
@@ -207,14 +207,11 @@ int Server::joincmd(Message &msg, int fd)
                                                 {
                                                         Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
                                                         chan.find(chan_name)->second.push_back(temp);
-                                                        send_privmsg(fd, "added to chan " + chan_name + "\n");
+                                                        send_privmsg(fd, "added to chan " + chan_name + "\n"); //send to all
                                                 }
                                                 else {
-                                                        send_privmsg(fd, "please give correct chanels password\n");
+                                                        send_err(fd, ERR_BADCHANNELKEY, ":Cannot join channel (+k)\n");
                                                 }
-                                        }
-                                        else{
-                                                send_privmsg(fd, "already in said chan\n");
                                         }
                                         //sur invite ?
                                         //est ce que le gars est ban/kick ?
@@ -225,19 +222,18 @@ int Server::joincmd(Message &msg, int fd)
                                         _v_cli_tmp.push_back(temp);
                                         chan[chan_name] = _v_cli_tmp;
                                         if ((msg.getParams().size() == 2) && (*it_pass != "")) { //creation d'un chan a mdp
-                                                std::cout << "mdp created" << '\n';
                                                 chan_flag[chan_name] = "+m";
                                                 chan_pass[chan_name] = msg.getParams().back();
                                         }
-                                        send_privmsg(fd, "Created and added to chan " + chan_name + "\n");
+                                        sendtoAll(chan[chan_name], (static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) +  " lol")); //send to all
                                 }
                         }
                         else{
-                                send_privmsg(fd, "chan must begin by #\n");
+                                send_err(fd, ERR_NOSUCHCHANNEL, ":No such channel\n");
                         }
                 }
                 else{
-                        send_privmsg(fd, "please give good amount of parameters\n");
+                        send_err(fd, ERR_NEEDMOREPARAMS, ":Not enough parameters\n");
                 }
                 it_chan++;
                 it_pass++;
@@ -245,9 +241,8 @@ int Server::joincmd(Message &msg, int fd)
         return(0);
 }
 
-void Server::send_err(int fd, int err, std::string msg) {
-        std::string s(ft_itoa(err));
-        send_privmsg(fd, s + msg);
+void Server::send_err(int fd, std::string err, std::string msg) {
+        send_privmsg(fd, err + msg);
 }
 
 int Server::do_cmd(Message msg, int fd){

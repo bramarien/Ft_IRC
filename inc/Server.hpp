@@ -49,7 +49,7 @@ void on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd);
 void on_message(std::vector<int>::iterator it_fd, int* ret_val);
 std::string executionner(char buf[5000], Message &message, int fd);
 int send_privmsg(int fd, std::string str);
-void send_err(int fd, int err, std::string msg);
+void send_err(int fd, std::string err, std::string msg);
 Client find_CfromFd(int fd);
 
 
@@ -70,7 +70,7 @@ std::string getPass(void) const {
 //Functions
 
 std::string getmsg(Message &msg, int fd);
-void sendtoAll(std::vector<Client*> at, std::string &msg);
+void sendtoAll(std::vector<Client*> at, std::string msg);
 void privmsg(Message &msg, int fd);
 void clearClient(int fd);
 bool   nick_check(std::string &nick, int fd);
