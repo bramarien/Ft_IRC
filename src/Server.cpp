@@ -189,10 +189,19 @@ int Server::create_tcp_server_socket(int port)
 
 std::string Server::executionner(char buf[5000], Message &message, int fd)
 {
-        message.parsing_cmd(buf);
-        message.display();
-        do_cmd(message, fd);
-        return("");
+        std::list<std::string> list_cmd;
+        std::list<std::string>::iterator it;
+        std::string buf_str(buf);
+
+        list_cmd = split_every_char(buf_str, '\n');
+        it = list_cmd.begin();
+        for (; it != list_cmd.end(); it++)
+        {
+                message.parsing_cmd(*it);
+                message.display();
+                do_cmd(message, fd);
+        }
+        return(""); // sert a rien ?
 }
 
 std::string Server::ft_itoa(int nbr){

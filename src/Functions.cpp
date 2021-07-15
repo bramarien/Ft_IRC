@@ -24,6 +24,9 @@ int Server::nickcmd(Message msg, int fd){
         if (msg.getParams().size() == 0) {
                 send_err(fd, ERR_NONICKNAMEGIVEN, " :No nickname given\n");
         }
+        else if (msg.getParams().size() > 1) {
+                send_err(fd, ERR_NEEDMOREPARAMS, msg.getCmd() + " :Syntax error\n");
+        }
         else if (msg.getParams().front() == _m_prefixclient[s].getNick()) {
                 send_err(fd, ERR_NICKNAMEINUSE, " <" + msg.getParams().front() +"> :Nickname is already in use\n");
         }
@@ -122,26 +125,27 @@ bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
 
 void Server::sendtoAll(std::vector<Client*> at, std::string msg)
 {
-  std::vector<Client*>::iterator client = at.begin();
-  for (; client != at.end(); client++) {
-    Client to_send = *(*client);
-    send_privmsg(to_send.getFd(), msg + "\n");
-  }
+        std::vector<Client*>::iterator client = at.begin();
+        for (; client != at.end(); client++) {
+                Client to_send = *(*client);
+                send_privmsg(to_send.getFd(), msg + "\n");
+        }
 
 }
 
 std::string Server::getmsg(Message &msg, int fd)
 {
-  std::list<std::string> params = msg.getParams();
-  std::string msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
-  std::list<std::string>::iterator it = params.begin();
-  it++;
-  for (; it != params.end(); it++) {
-    std::string tmp = *it;
-    std::cout << "tmp ->" << tmp << std::endl;
-    msg_tosend.append(tmp + " ");
-  }
-  return (msg_tosend);
+        std::list<std::string> params = msg.getParams();
+        std::string msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
+        std::list<std::string>::iterator it = params.begin();
+        it++;
+        if (params.size() == 2){
+          msg_tosend.append(*it);
+        }
+        else {
+            send_err(fd, ERR_NEEDMOREPARAMS, "Syntax Error\n"); // changer !
+        }
+        return (msg_tosend);
 }
 
 void Server::privmsg(Message &msg, int fd)
@@ -153,7 +157,7 @@ void Server::privmsg(Message &msg, int fd)
                 std::list<std::string>::iterator it_recv = receiver_list.begin();
                 while(it_recv != receiver_list.end())
                 {
-                    std::cout << "it_recv -> " << *it_recv << std::endl;
+                        std::cout << "it_recv -> " << *it_recv << std::endl;
                         if ((*it_recv)[0] == '#') {
                                 if (chan.find(*it_recv) != chan.end()) {
                                         sendtoAll(chan[*it_recv], msg_tosend);
@@ -163,7 +167,7 @@ void Server::privmsg(Message &msg, int fd)
                                 }
                         }
                         else {
-                          std::cout << "searching for clients" << '\n';
+                                std::cout << "searching for clients" << '\n';
                                 std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
                                 for (; it_clients != _m_prefixclient.end(); it_clients++) {
                                         if (it_clients->second.getFd() == fd)
@@ -178,20 +182,19 @@ void Server::privmsg(Message &msg, int fd)
                 }
         }
         else {
-          send_err(fd, ERR_NOTEXTTOSEND, " :No text to send     or     ");
-          send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick/channel\n");
+                send_err(fd, ERR_NOTEXTTOSEND, " :No text to send     or     ");
+                send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick/channel\n");
         }
 }
 
 int Server::joincmd(Message &msg, int fd)
 {
-        //s'occuper de l'acces a plusieurs canal en meme temps
         //commencer par verifier nombre de parametres
         std::list<std::string> chan_list = split_every_char(msg.getParams().front(), ',');
         std::list<std::string>::iterator it_chan = chan_list.begin();
         std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
         std::list<std::string>::iterator it_pass = pass_list.begin();
-        //send message to all users once someone is
+        //send message to all users once someone is logged in channel
         while((it_chan != chan_list.end()) && (it_pass != pass_list.end()))
         {
                 std::string chan_name = *it_chan;
@@ -242,7 +245,7 @@ int Server::joincmd(Message &msg, int fd)
 }
 
 void Server::send_err(int fd, std::string err, std::string msg) {
-        send_privmsg(fd, err + msg);
+        send_privmsg(fd, ":" + static_cast<std::string>(SERV_NAME) + " " + err + _m_prefixclient[_m_fdprefix[fd]].getNick() + msg);
 }
 
 int Server::do_cmd(Message msg, int fd){
@@ -251,7 +254,6 @@ int Server::do_cmd(Message msg, int fd){
                 passcmd(msg, fd);
         }
         else if (_m_prefixclient[s].getCorr() == true) {
-                std::cout << "good pass, access" << '\n';
                 if (msg.getCmd() == "NICK") {
                         nickcmd(msg, fd);
                 }
@@ -260,21 +262,19 @@ int Server::do_cmd(Message msg, int fd){
                 }
                 else if (_m_prefixclient[_m_fdprefix[fd]].getReg() == true)
                 {
-                        std::cout << "entering matrix" << '\n';
                         if (msg.getCmd() == "JOIN") {
                                 joincmd(msg, fd);
                         }
-                        else if (msg.getCmd() == "PRIVMSG") {
+                        else if (msg.getCmd() == "PRIVMSG" || msg.getCmd() == "NOTICE") {
                                 privmsg(msg, fd);
                         }
                 }
                 else
-                        send_privmsg(fd, "Bad cmd\n");
+                        send_err(fd, ERR_UNKNOWNCOMMAND, msg.getCmd() + " :Unknown command");
         }
         else {
-                send_privmsg(fd, "Bad cmd\n");
-                std::cout << "bad cmd" << '\n';
-                //join privmsg(#chan || nick) OPER-> KILL LUSER(info serv) HELP  - NOTICE
+                send_err(fd, ERR_NOTREGISTERED, "* :Connection not registered\n");
+                //join privmsg(#chan || nick) OPER-> KILL
         }
         return (0);
 }

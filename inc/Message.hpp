@@ -21,7 +21,8 @@ public:
   Message &operator=( Message const & rhs );
 
   void display();
-  void parsing_cmd(char buf[5000]);
+  void parsing_cmd(std::string buf_str);
+  void parsing_text(char buf[5000]);
 
   //Getter & Setter
   t_list getParams(void) { return (this->params); }
