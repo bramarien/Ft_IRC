@@ -22,6 +22,7 @@ Server &    Server::operator=(Server const & rhs ){
 void Server::on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd) {
         Client* new_user = new Client(new_addr, addrlen, new_fd);
         std::cout << "Accepted a new connection with fd " << new_fd << std::endl;
+        new_user->setNick("*");
         this->_socket_fd.push_back(new_fd);
         this->_v_clients.push_back(*new_user);
         std::cout << inet_ntoa(_v_clients.back().getInfo().sin_addr) << " -> Ip adress of new_user" << std::endl;

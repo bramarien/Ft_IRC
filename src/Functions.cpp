@@ -100,8 +100,11 @@ int Server::usercmd(Message &msg, int fd) {
                         _m_fdprefix[fd] = prefix;
                         _m_prefixclient[prefix] = _m_prefixclient[s];
                         send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
-                        _m_prefixclient[prefix].setReg(true);
+                        _m_prefixclient[prefix].setUserstatus(true);
                         _m_prefixclient[prefix].setFd(fd);
+                        if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()){
+                              _m_prefixclient[prefix].setReg(true);
+                        }
                 }
                 else{
                         send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");

@@ -27,9 +27,13 @@ std::string getReal(void) { return(this->realname); }
 std::string getUser(void) { return(this->username); }
 bool getCorr(void) { return(this->corr_pass); }
 bool getReg(void) { return(this->is_registered); }
+bool getNickstatus(void) { return(this->nickSet); }
+bool getUserstatus(void) { return(this->userSet); }
 int getFd(void) { return(this->fd); }
 
 void setReg(bool src) { this->is_registered = src; }
+void setNickstatus(bool src) { this->nickSet = src; }
+void setUserstatus(bool src) { this->userSet = src; }
 void setCorr(bool src) { this->corr_pass = src; }
 void setNick(std::string src) { this->nickname = src; }
 void setUser(std::string src) { this->username = src; }
@@ -48,6 +52,8 @@ std::string realname;
 std::string password;
 bool  is_registered;
 bool  corr_pass;
+bool  nickSet;
+bool  userSet;
 
 };
 
