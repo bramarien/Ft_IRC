@@ -27,7 +27,7 @@ int Server::nickcmd(Message msg, int fd){
         else if (msg.getParams().size() > 1) {
                 send_err(fd, ERR_NEEDMOREPARAMS, msg.getCmd() + " :Syntax error\n");
         }
-        else if (msg.getParams().front() == _m_prefixclient[s].getNick()) {
+        else if (msg.getParams().front() == _m_prefixclient[_m_fdprefix[fd]].getNick()) {
                 send_err(fd, ERR_NICKNAMEINUSE, " <" + msg.getParams().front() +"> :Nickname is already in use\n");
         }
         else if (nick_check(msg.getParams().front(), fd) == false) {
@@ -35,7 +35,10 @@ int Server::nickcmd(Message msg, int fd){
         }
         else {
                 send_privmsg(fd, "Nick has been registered -- <" + msg.getParams().front() + ">\n");
-                _m_prefixclient[s].setNick(msg.getParams().front());
+                _m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
+        }
+        if (_m_prefixclient[_m_fdprefix[fd]].getNickstatus() && _m_prefixclient[_m_fdprefix[fd]].getUserstatus()) {
+                _m_prefixclient[_m_fdprefix[fd]].setReg(true);
         }
         return(0);
 }
@@ -100,8 +103,11 @@ int Server::usercmd(Message &msg, int fd) {
                         _m_fdprefix[fd] = prefix;
                         _m_prefixclient[prefix] = _m_prefixclient[s];
                         send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
-                        _m_prefixclient[prefix].setReg(true);
+                        _m_prefixclient[prefix].setUserstatus(true);
                         _m_prefixclient[prefix].setFd(fd);
+                        if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()) {
+                                _m_prefixclient[prefix].setReg(true);
+                        }
                 }
                 else{
                         send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
@@ -139,11 +145,11 @@ std::string Server::getmsg(Message &msg, int fd)
         std::string msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
         std::list<std::string>::iterator it = params.begin();
         it++;
-        if (params.size() == 2){
-          msg_tosend.append(*it);
+        if (params.size() == 2) {
+                msg_tosend.append(*it);
         }
         else {
-            send_err(fd, ERR_NEEDMOREPARAMS, "Syntax Error\n"); // changer !
+                send_err(fd, ERR_NEEDMOREPARAMS, "Syntax Error\n"); // changer !
         }
         return (msg_tosend);
 }
