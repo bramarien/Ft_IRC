@@ -36,7 +36,7 @@ void Server::loop(void)
         struct sockaddr_in new_addr;
         socklen_t addrlen;
 
-        while (1)
+        while (420)
         {
                 FD_ZERO(&read_fd_set); /* Set the fd_set before passing it to the select call */
                 for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++)
