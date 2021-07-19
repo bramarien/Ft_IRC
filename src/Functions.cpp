@@ -19,6 +19,7 @@ int Server::killcmd(Message &msg, int fd) {
                     int check = it_clients->second.getFd();
                     if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
                       std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
+                      send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\n");
                       _m_fdprefix.erase(it_clients->second.getFd());
                       clearClient(it_clients->second.getFd());
                       close(it_clients->second.getFd());
@@ -39,6 +40,7 @@ int Server::killcmd(Message &msg, int fd) {
   else {
     send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an IRC operator\n");
   }
+  return (0);
 }
 
 int Server::opercmd(Message &msg, int fd) {
@@ -77,7 +79,7 @@ bool Server::nick_check(std::string &nick, int fd){
         std::map<std::string, Client>::iterator it = this->_m_prefixclient.begin();
         while(it != this->_m_prefixclient.end()) {
                 std::cout << (it->second.getNick()) << '\n';
-                if (it->second.getNick() == nick && it->second.getFd() != 0) /* && (it->getReg() == true)*/) {
+                if (it->second.getNick() == nick && it->second.getFd() != 0){
                         return false;
                 }
                 it++;
