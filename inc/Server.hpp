@@ -9,7 +9,7 @@
 #include <sstream>
 
 #define DATA_BUFFER 5000
-
+#define OPERATOR_PW std::string("passweird")
 #define MAX_CONNECTIONS 1024
 
 class Server
@@ -17,6 +17,7 @@ class Server
 private:
 Server();
 //Real Server Param
+fd_set read_fd_set;
 int const _portnum;
 std::string const _password;
 char _buf[DATA_BUFFER];
@@ -68,7 +69,6 @@ std::string getPass(void) const {
 }
 
 //Functions
-
 std::string getmsg(Message &msg, int fd);
 void sendtoAll(std::vector<Client*> at, std::string msg);
 void privmsg(Message &msg, int fd);
@@ -79,6 +79,8 @@ int passcmd(Message & msg, int fd);
 int usercmd(Message &msg, int fd);
 int do_cmd(Message msg, int fd);
 int joincmd(Message &msg, int fd);
+int opercmd(Message &msg, int fd);
+int killcmd(Message &msg, int fd);
 bool  find_Cinchan(int fd, std::vector<Client*> vect);
 std::list<std::string> split_every_char(std::string str, char separator);
 };

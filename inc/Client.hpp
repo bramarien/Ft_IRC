@@ -30,11 +30,13 @@ bool getReg(void) { return(this->is_registered); }
 bool getNickstatus(void) { return(this->nickSet); }
 bool getUserstatus(void) { return(this->userSet); }
 int getFd(void) { return(this->fd); }
+int getOp(void) { return(this->op); }
 
 void setReg(bool src) { this->is_registered = src; }
 void setNickstatus(bool src) { this->nickSet = src; }
 void setUserstatus(bool src) { this->userSet = src; }
 void setCorr(bool src) { this->corr_pass = src; }
+void setOp(bool src) { this->op = src; }
 void setNick(std::string src) { this->nickname = src; }
 void setUser(std::string src) { this->username = src; }
 void setReal(std::string src) { this->realname = src; }
@@ -54,6 +56,7 @@ bool  is_registered;
 bool  corr_pass;
 bool  nickSet;
 bool  userSet;
+bool  op;
 
 
 };

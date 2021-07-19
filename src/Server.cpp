@@ -29,7 +29,6 @@ void Server::on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd) 
 
 void Server::loop(void)
 {
-        fd_set read_fd_set;
         int ret_val;
         int new_fd;
 
@@ -106,6 +105,8 @@ void Server::loop(void)
                                 if (!ret_val) continue;
                         } /* for-loop */
                 } /* (ret_val >= 0) */
+                else {
+                }
         } /* while(1) */
 }
 
@@ -190,7 +191,7 @@ int Server::create_tcp_server_socket(int port)
 std::string Server::executionner(char buf[5000], Message &message, int fd)
 {
         std::string buf_str(buf);
-        if (buf_str.size() >= 1)
+        if (buf_str.size() >= 2)
         {
           std::list<std::string> list_cmd;
           std::list<std::string>::iterator it;

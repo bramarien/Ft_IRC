@@ -1,8 +1,75 @@
 #include "../inc/Server.hpp"
 // #include "../inc/main.hpp"
 
-int Server::send_privmsg(int fd, std::string str)
-{
+int Server::killcmd(Message &msg, int fd) {
+  if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
+          if (msg.getParams().size() != 2) {
+            if (msg.getParams().size() > 2)
+              send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
+            else
+              send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
+          }
+          else if (nick_check(msg.getParams().front(), fd) == true) {
+            send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
+          }
+          else {
+            std::cout << "searching for clients" << '\n';
+            std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
+            for (; it_clients != _m_prefixclient.end(); it_clients++) {
+                    if (it_clients->second.getFd() == 0)
+                      continue;
+                    if (it_clients->second.getNick() == msg.getParams().front()) {
+                      std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
+                      _m_fdprefix.erase(it_clients->second.getFd());
+                      clearClient(it_clients->second.getFd());
+                      close(it_clients->second.getFd());
+                      FD_CLR(it_clients->second.getFd(), &read_fd_set);
+                      // for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++)
+                      //   if (*it == it_clients->second.getFd())
+                      //     _socket_fd.erase(it);
+                      //     break;
+                      std::cout << "User : " << it_clients->second.getNick() << " has been KILL" << std::endl;
+                      _m_prefixclient.erase(it_clients);
+                      break;
+                    }
+            }
+          }
+  }
+  else {
+    send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an IRC operator\n");
+  }
+}
+
+int Server::opercmd(Message &msg, int fd) {
+        if (msg.getParams().size() != 2) {
+          if (msg.getParams().size() > 2)
+            send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
+          else
+            send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
+        }
+        else if (nick_check(msg.getParams().front(), fd) == true) {
+          send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
+        }
+        else if (msg.getParams().back() == OPERATOR_PW) {
+          std::cout << "searching for clients" << '\n';
+          std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
+          for (; it_clients != _m_prefixclient.end(); it_clients++) {
+                  if (it_clients->second.getFd() == 0)
+                    continue;
+                  if (it_clients->second.getNick() == msg.getParams().front()) {
+                          it_clients->second.setOp(true);
+                          std::cout << "User : " << it_clients->second.getNick() << " has been OP" << std::endl;
+                  }
+          }
+        }
+        else {
+          send_err(fd, ERR_PASSWDMISMATCH, " :Password incorrect\n");
+        }
+        return (0);
+
+}
+
+int Server::send_privmsg(int fd, std::string str) {
         return (send(fd, str.c_str(), str.size(), 0));
 }
 
@@ -35,9 +102,10 @@ int Server::nickcmd(Message msg, int fd){
         }
         else {
                 send_privmsg(fd, "Nick has been registered -- <" + msg.getParams().front() + ">\n");
-                _m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
+                _m_prefixclient[s].setNick(msg.getParams().front());
+                _m_prefixclient[s].setNickstatus(true);
         }
-        if (_m_prefixclient[_m_fdprefix[fd]].getNickstatus() && _m_prefixclient[_m_fdprefix[fd]].getUserstatus()) {
+        if (_m_prefixclient[s].getNickstatus() && _m_prefixclient[_m_fdprefix[fd]].getUserstatus()) {
                 _m_prefixclient[_m_fdprefix[fd]].setReg(true);
         }
         return(0);
@@ -176,12 +244,11 @@ void Server::privmsg(Message &msg, int fd)
                                 std::cout << "searching for clients" << '\n';
                                 std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
                                 for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                                        if (it_clients->second.getFd() == fd)
-                                                continue;
-                                        else if (it_clients->second.getNick() == *it_recv) {
+                                        if (it_clients->second.getNick() == *it_recv) {
+                                                std::cout << "let's send some shit boy -> " << msg_tosend << std::endl;
+                                                std::cout << "fd found -> " << it_clients->second.getFd() << std::endl;
                                                 send_privmsg(it_clients->second.getFd(), msg_tosend + "\n");
                                         }
-
                                 }
                         }
                         it_recv++;
@@ -251,7 +318,7 @@ int Server::joincmd(Message &msg, int fd)
 }
 
 void Server::send_err(int fd, std::string err, std::string msg) {
-        send_privmsg(fd, ":" + static_cast<std::string>(SERV_NAME) + " " + err + _m_prefixclient[_m_fdprefix[fd]].getNick() + msg);
+        send_privmsg(fd, ":" + static_cast<std::string>(SERV_NAME) + " " + err + msg);
 }
 
 int Server::do_cmd(Message msg, int fd){
@@ -274,9 +341,16 @@ int Server::do_cmd(Message msg, int fd){
                         else if (msg.getCmd() == "PRIVMSG" || msg.getCmd() == "NOTICE") {
                                 privmsg(msg, fd);
                         }
+                        else if (msg.getCmd() == "OPER") {
+                                opercmd(msg, fd);
+                        }
+                        if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
+                                if (msg.getCmd() == "KILL")
+                                        killcmd(msg, fd);
+                        }
                 }
                 else
-                        send_err(fd, ERR_UNKNOWNCOMMAND, msg.getCmd() + " :Unknown command");
+                        send_err(fd, ERR_UNKNOWNCOMMAND, " :Unknown command\n");
         }
         else {
                 send_err(fd, ERR_NOTREGISTERED, "* :Connection not registered\n");

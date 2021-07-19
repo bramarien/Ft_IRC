@@ -3,7 +3,7 @@
 // #include "../inc/main.hpp"
 
 
-Message::Message(){
+Message::Message() : command(), params(){
 }
 
 Message::Message( Message const & src ) : params(src.params){
