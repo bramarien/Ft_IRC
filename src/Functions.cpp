@@ -16,18 +16,19 @@ int Server::killcmd(Message &msg, int fd) {
             std::cout << "searching for clients" << '\n';
             std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
             for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                    if (it_clients->second.getFd() == 0)
-                      continue;
-                    if (it_clients->second.getNick() == msg.getParams().front()) {
+                    int check = it_clients->second.getFd();
+                    if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
                       std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
                       _m_fdprefix.erase(it_clients->second.getFd());
                       clearClient(it_clients->second.getFd());
                       close(it_clients->second.getFd());
                       FD_CLR(it_clients->second.getFd(), &read_fd_set);
-                      // for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++)
-                      //   if (*it == it_clients->second.getFd())
-                      //     _socket_fd.erase(it);
-                      //     break;
+                      for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++){
+                        if (*it == it_clients->second.getFd()){
+                          _socket_fd.erase(it);
+                          break;
+                        }
+                      }
                       std::cout << "User : " << it_clients->second.getNick() << " has been KILL" << std::endl;
                       _m_prefixclient.erase(it_clients);
                       break;
@@ -54,9 +55,7 @@ int Server::opercmd(Message &msg, int fd) {
           std::cout << "searching for clients" << '\n';
           std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
           for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                  if (it_clients->second.getFd() == 0)
-                    continue;
-                  if (it_clients->second.getNick() == msg.getParams().front()) {
+                  if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
                           it_clients->second.setOp(true);
                           std::cout << "User : " << it_clients->second.getNick() << " has been OP" << std::endl;
                   }
@@ -78,7 +77,7 @@ bool Server::nick_check(std::string &nick, int fd){
         std::map<std::string, Client>::iterator it = this->_m_prefixclient.begin();
         while(it != this->_m_prefixclient.end()) {
                 std::cout << (it->second.getNick()) << '\n';
-                if ((it->second.getNick() == nick) /* && (it->getReg() == true)*/) {
+                if (it->second.getNick() == nick && it->second.getFd() != 0) /* && (it->getReg() == true)*/) {
                         return false;
                 }
                 it++;
@@ -244,7 +243,7 @@ void Server::privmsg(Message &msg, int fd)
                                 std::cout << "searching for clients" << '\n';
                                 std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
                                 for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                                        if (it_clients->second.getNick() == *it_recv) {
+                                        if (it_clients->second.getNick() == *it_recv && it_clients->second.getFd() != 0) {
                                                 std::cout << "let's send some shit boy -> " << msg_tosend << std::endl;
                                                 std::cout << "fd found -> " << it_clients->second.getFd() << std::endl;
                                                 send_privmsg(it_clients->second.getFd(), msg_tosend + "\n");

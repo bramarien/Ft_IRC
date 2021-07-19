@@ -93,6 +93,7 @@ void Server::loop(void)
                                         {
                                                 std::cout << _buf << std::endl;
                                                 std::string response = executionner(_buf, mess, *it_fd);
+                                                break;
                                         }
                                         if (ret_val == -1)
                                         {
@@ -106,6 +107,7 @@ void Server::loop(void)
                         } /* for-loop */
                 } /* (ret_val >= 0) */
                 else {
+                  return ;
                 }
         } /* while(1) */
 }
