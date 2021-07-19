@@ -37,9 +37,6 @@ int Server::nickcmd(Message msg, int fd){
                 send_privmsg(fd, "Nick has been registered -- <" + msg.getParams().front() + ">\n");
                 _m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
         }
-        if (_m_prefixclient[_m_fdprefix[fd]].getNickstatus() && _m_prefixclient[_m_fdprefix[fd]].getUserstatus()) {
-                _m_prefixclient[_m_fdprefix[fd]].setReg(true);
-        }
         return(0);
 }
 

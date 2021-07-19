@@ -190,7 +190,7 @@ int Server::create_tcp_server_socket(int port)
 std::string Server::executionner(char buf[5000], Message &message, int fd)
 {
         std::string buf_str(buf);
-        if (buf_str.size() >= 1)
+        if (buf_str.size() >= 2)
         {
           std::list<std::string> list_cmd;
           std::list<std::string>::iterator it;
