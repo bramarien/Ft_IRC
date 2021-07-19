@@ -2,69 +2,88 @@
 // #include "../inc/main.hpp"
 
 int Server::killcmd(Message &msg, int fd) {
-  if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
-          if (msg.getParams().size() != 2) {
-            if (msg.getParams().size() > 2)
-              send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
-            else
-              send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
-          }
-          else if (nick_check(msg.getParams().front(), fd) == true) {
-            send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
-          }
-          else {
-            std::cout << "searching for clients" << '\n';
-            std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
-            for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                    int check = it_clients->second.getFd();
-                    if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
-                      std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
-                      send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\n");
-                      _m_fdprefix.erase(it_clients->second.getFd());
-                      clearClient(it_clients->second.getFd());
-                      close(it_clients->second.getFd());
-                      FD_CLR(it_clients->second.getFd(), &read_fd_set);
-                      for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++){
-                        if (*it == it_clients->second.getFd()){
-                          _socket_fd.erase(it);
-                          break;
+        if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
+                if (msg.getParams().size() != 2) {
+                        if (msg.getParams().size() > 2)
+                                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
+                        else
+                                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
+                }
+                else if (nick_check(msg.getParams().front(), fd) == true) {
+                        send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
+                }
+                else {
+                        std::cout << "searching for clients" << '\n';
+                        std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
+                        for (; it_clients != _m_prefixclient.end(); it_clients++) {
+                                int check = it_clients->second.getFd();
+                                if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
+                                        std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
+                                        send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\n");
+                                        removeCfromChan(&(it_clients->second));
+                                        _m_fdprefix.erase(it_clients->second.getFd());
+                                        clearClient(it_clients->second.getFd());
+                                        close(it_clients->second.getFd());
+                                        FD_CLR(it_clients->second.getFd(), &read_fd_set);
+                                        for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++) {
+                                                if (*it == it_clients->second.getFd()) {
+                                                        _socket_fd.erase(it);
+                                                        break;
+                                                }
+                                        }
+                                        std::cout << "User : " << it_clients->second.getNick() << " has been KILL" << std::endl;
+                                        _m_prefixclient.erase(it_clients);
+                                        break;
+                                }
                         }
-                      }
-                      std::cout << "User : " << it_clients->second.getNick() << " has been KILL" << std::endl;
-                      _m_prefixclient.erase(it_clients);
-                      break;
-                    }
-            }
-          }
-  }
-  else {
-    send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an IRC operator\n");
-  }
-  return (0);
+                }
+        }
+        else {
+                send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an IRC operator\n");
+        }
+        return (0);
+}
+
+void Server::removeCfromChan(Client *to_remove)
+{
+        std::map<std::string, std::vector<Client *> >::iterator it_chan = chan.begin();
+        for(; it_chan != chan.end(); it_chan++) {
+                std::vector<Client*>::iterator it_client = (*it_chan).second.begin();
+                std::cout << "\nsize : " << (*it_chan).second.size() << '\n';
+                // std::cout << "reference " << (*it_client)[to_remove] << '\n';
+                /*for (; it_client != it_chan->second.end(); it_client++) {
+                        if ((*it_client)->getFd() == to_remove->getFd()){
+                          std::cout << "client found : " << *it_client.getNick() << *it_client.getFd()  << '\n';
+                          *it_chan->second.erase(it_client);
+                        }
+
+                }*/
+        }
+
 }
 
 int Server::opercmd(Message &msg, int fd) {
         if (msg.getParams().size() != 2) {
-          if (msg.getParams().size() > 2)
-            send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
-          else
-            send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
+                if (msg.getParams().size() > 2)
+                        send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
+                else
+                        send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
         }
         else if (nick_check(msg.getParams().front(), fd) == true) {
-          send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
+                send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
         }
         else if (msg.getParams().back() == OPERATOR_PW) {
-          std::cout << "searching for clients" << '\n';
-          std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
-          for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                  if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
-                          it_clients->second.setOp(true);
-                          std::cout << "User : " << it_clients->second.getNick() << " has been OP" << std::endl;
-                  }
-          }
+                std::cout << "searching for clients" << '\n';
+                std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
+                for (; it_clients != _m_prefixclient.end(); it_clients++) {
+                        if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
+                                it_clients->second.setOp(true);
+                                std::cout << "User : " << it_clients->second.getNick() << " has been OP" << std::endl;
+                        }
+                }
         }
         else {
-          send_err(fd, ERR_PASSWDMISMATCH, " :Password incorrect\n");
+                send_err(fd, ERR_PASSWDMISMATCH, " :Password incorrect\n");
         }
         return (0);
 
@@ -79,7 +98,7 @@ bool Server::nick_check(std::string &nick, int fd){
         std::map<std::string, Client>::iterator it = this->_m_prefixclient.begin();
         while(it != this->_m_prefixclient.end()) {
                 std::cout << (it->second.getNick()) << '\n';
-                if (it->second.getNick() == nick && it->second.getFd() != 0){
+                if (it->second.getNick() == nick && it->second.getFd() != 0) {
                         return false;
                 }
                 it++;
