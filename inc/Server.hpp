@@ -83,6 +83,7 @@ int opercmd(Message &msg, int fd);
 int killcmd(Message &msg, int fd);
 bool  find_Cinchan(int fd, std::vector<Client*> vect);
 std::list<std::string> split_every_char(std::string str, char separator);
+void dispMemberName(int fd, std::string chan_name);
 };
 
 // std::ostream &			operator<<( std::ostream & o, Server const & i );

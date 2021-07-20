@@ -263,6 +263,21 @@ void Server::privmsg(Message &msg, int fd)
         }
 }
 
+void Server::dispMemberName(int fd, std::string chan_name) {
+        std::string nick = _m_prefixclient[_m_fdprefix[fd]].getNick();
+        send_privmsg(fd, (static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) + " " + nick + " :"));
+        std::vector<Client *>::iterator it = chan[chan_name].begin();
+        for(; it != chan[chan_name].end(); it++) {
+                if ((*it)->getOp()) {
+                        send_privmsg(fd, "@" + (*it)->getNick() + " ");
+                }
+                else {
+                        send_privmsg(fd, (*it)->getNick() + " ");
+                }
+        }
+        send_privmsg(fd, "\n");
+}
+
 int Server::joincmd(Message &msg, int fd)
 {
         //commencer par verifier nombre de parametres
@@ -286,7 +301,9 @@ int Server::joincmd(Message &msg, int fd)
                                                 {
                                                         Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
                                                         chan.find(chan_name)->second.push_back(temp);
-                                                        send_privmsg(fd, "added to chan " + chan_name + "\n"); //send to all
+                                                        sendtoAll(chan[chan_name], _m_fdprefix[fd] + " JOIN :" + chan_name);
+                                                        dispMemberName(fd, chan_name);
+
                                                 }
                                                 else {
                                                         send_err(fd, ERR_BADCHANNELKEY, ":Cannot join channel (+k)\n");
@@ -304,7 +321,8 @@ int Server::joincmd(Message &msg, int fd)
                                                 chan_flag[chan_name] = "+m";
                                                 chan_pass[chan_name] = msg.getParams().back();
                                         }
-                                        sendtoAll(chan[chan_name], (static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) +  " lol")); //send to all
+                                        sendtoAll(chan[chan_name], _m_fdprefix[fd] + " JOIN :" + chan_name);
+                                        // sendtoAll(chan[chan_name], (static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) +  " lol")); //send to all
                                 }
                         }
                         else{
