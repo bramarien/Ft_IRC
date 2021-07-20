@@ -213,7 +213,13 @@ void Server::sendtoAll(std::vector<Client*> at, std::string msg)
 std::string Server::getmsg(Message &msg, int fd)
 {
         std::list<std::string> params = msg.getParams();
-        std::string msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
+        std::string msg_tosend;
+        if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true){
+          msg_tosend = "From @" + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
+        }
+        else{
+          msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
+        }
         std::list<std::string>::iterator it = params.begin();
         it++;
         if (params.size() == 2) {
