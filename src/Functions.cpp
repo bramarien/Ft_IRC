@@ -1,6 +1,51 @@
 #include "../inc/Server.hpp"
 // #include "../inc/main.hpp"
 
+int Server::listcmd(Message &msg, int fd) {
+  return (0);
+}
+
+int Server::kickcmd(Message &msg, int fd) {
+    if (msg.getParams().size() == 3) {
+      std::list<std::string> args = msg.getParams();
+      std::list<std::string>::iterator it_args;
+      it_args = args.begin();
+      std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
+      for (; it_chan != chan.end(); it_chan++) {
+        if (it_chan->first == msg.getParams().front())
+          break;
+      }
+      if (it_chan != chan.end()) {
+        if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
+          it_args++;
+          std::vector<Client*>::iterator it_cli = it_chan->second.begin();
+          for (; it_cli != it_chan->second.end(); it_cli++) {
+            if ((**it_cli).getNick() == *it_args) {
+              std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
+              break;
+            }
+          }
+          if (it_cli != it_chan->second.end()) {
+            it_chan->second.erase(it_cli);
+          }
+          else {
+            send_err(fd, ERR_NOSUCHNICK, " <" + *it_args + "> :No such nick in the channel " + it_chan->first + "\n");
+          }
+        }
+        else {
+          send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an operator of " + it_chan->first + " channel \n");
+        }
+      }
+      else {
+        send_err(fd, ERR_NOSUCHCHANNEL, "<" + msg.getParams().front() + "> :No such channel\n");
+      }
+    }
+    else {
+      send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 3 paramaters\n");
+    }
+    return (0);
+}
+
 int Server::killcmd(Message &msg, int fd) {
         if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
                 if (msg.getParams().size() != 2) {
@@ -274,7 +319,7 @@ void Server::dispMemberName(int fd, std::string chan_name) {
         send_privmsg(fd, (static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) + " " + nick + " :"));
         std::vector<Client *>::iterator it = chan[chan_name].begin();
         for(; it != chan[chan_name].end(); it++) {
-                if ((*it)->getOp()) {
+                if ((*it)->getOp() || (chan_oper[chan_name] == (*it)->getNick())) {
                         send_privmsg(fd, "@" + (*it)->getNick() + " ");
                 }
                 else {
@@ -322,6 +367,7 @@ int Server::joincmd(Message &msg, int fd)
                                         Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
                                         std::vector<Client *> _v_cli_tmp;
                                         _v_cli_tmp.push_back(temp);
+                                        chan_oper[chan_name] = temp->getNick();
                                         chan[chan_name] = _v_cli_tmp;
                                         if ((msg.getParams().size() == 2) && (*it_pass != "")) { //creation d'un chan a mdp
                                                 chan_flag[chan_name] = "+m";
@@ -370,6 +416,12 @@ int Server::do_cmd(Message msg, int fd){
                         }
                         else if (msg.getCmd() == "OPER") {
                                 opercmd(msg, fd);
+                        }
+                        else if (msg.getCmd() == "LIST") {
+                                listcmd(msg, fd);
+                        }
+                        else if (msg.getCmd() == "KICK") {
+                                kickcmd(msg, fd);
                         }
                         if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
                                 if (msg.getCmd() == "KILL")

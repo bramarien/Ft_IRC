@@ -1,14 +1,30 @@
 #include "../inc/Server.hpp"
 
 
-Server::Server() : _portnum(6667), _password("qwe"){
+Server::Server() : _portnum(6667), _password("qwe"), read_fd_set(), mess(), _saddr(){
+        _v_clients.clear();
+        _m_fdprefix.clear();
+        _m_prefixclient.clear();
+        _socket_fd.clear();
+        chan.clear();
+        chan_oper.clear();
+        chan_flag.clear();
+        chan_pass.clear();
 }
 
 Server::Server(int port, std::string pass) : _portnum(port), _password(pass)
 {
+        _v_clients.clear();
+        _m_fdprefix.clear();
+        _m_prefixclient.clear();
         _socket_fd.clear();
+        chan.clear();
+        chan_oper.clear();
+        chan_flag.clear();
+        chan_pass.clear();
 }
 Server::Server( Server const & src ) : _v_clients(src.getClients()), _portnum(src.getPort()), _password(src.getPass()){
+
 }
 
 Server::~Server(){
@@ -25,6 +41,16 @@ void Server::on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd) 
         this->_socket_fd.push_back(new_fd);
         this->_v_clients.push_back(*new_user);
         std::cout << inet_ntoa(_v_clients.back().getInfo().sin_addr) << " -> Ip adress of new_user" << std::endl;
+}
+
+bool Server::bufferComplete(int fd, char [5000]buf){
+    std::string s(buf);
+
+    _m_fdbuffer[fd] += s;
+    if (_m_fdbuffer[fd].find('\n') == std::string::npos()){
+
+    }
+
 }
 
 void Server::loop(void)
@@ -44,7 +70,6 @@ void Server::loop(void)
                 /* Invoke select() and then wait! */
                 std::cout << "Poll with select to listen for entry" << std::endl;
                 ret_val = select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL);
-
                 /* select() woke up. Identify the fd that has events */
                 std::cout << "ret_val: " << ret_val << '\n';
                 if (ret_val >= 0)
@@ -78,6 +103,7 @@ void Server::loop(void)
                                         std::cout << "Listening from fd-> " << *it_fd << std::endl;
                                         ret_val = recv(*it_fd, _buf, DATA_BUFFER, 0);
                                         ret_val >= 2 ? _buf[ret_val - 1] = 0 : _buf[ret_val] = 0;
+
                                         if (ret_val == 0)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;

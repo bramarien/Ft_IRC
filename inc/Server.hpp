@@ -27,6 +27,7 @@ struct sockaddr_in _saddr;
 
 //tools for Server
 std::vector<Client> _v_clients;
+std::map<int, std::string> _m_fdbuffer;
 std::map<int, std::string> _m_fdprefix; // from fd to prefix ()
 std::map<std::string, Client> _m_prefixclient; // from prefix to definitive clients
 
@@ -35,6 +36,7 @@ public:
 // HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
 std::map<std::string, std::vector<Client*> > chan;
 std::map<std::string, std::string> chan_flag; // see todo pour flags possible sur channel
+std::map<std::string, std::string> chan_oper;
 std::map<std::string, std::string> chan_pass; // la on store les mdp
 
 Server(int port, std::string pass);
@@ -69,6 +71,8 @@ std::string getPass(void) const {
 }
 
 //Functions
+int kickcmd(Message &msg, int fd);
+int listcmd(Message &msg, int fd);
 std::string getmsg(Message &msg, int fd);
 void sendtoAll(std::vector<Client*> at, std::string msg);
 void privmsg(Message &msg, int fd);
