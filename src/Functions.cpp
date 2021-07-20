@@ -20,7 +20,6 @@ int Server::killcmd(Message &msg, int fd) {
                                 if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
                                         std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
                                         send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\n");
-                                        // removeCfromChan(&(it_clients->second));
                                         _m_fdprefix.erase(it_clients->second.getFd());
                                         clearClient(it_clients->second.getFd());
                                         close(it_clients->second.getFd());
@@ -43,24 +42,6 @@ int Server::killcmd(Message &msg, int fd) {
         }
         return (0);
 }
-
-// void Server::removeCfromChan(Client *to_remove)
-// {
-//         std::map<std::string, std::vector<Client *> >::iterator it_chan = chan.begin();
-//         for(; it_chan != chan.end(); it_chan++) {
-//                 std::vector<Client*>::iterator it_client = (*it_chan).second.begin();
-//                 std::cout << "\nsize : " << (*it_chan).second.size() << '\n';
-//                 // std::cout << "reference " << (*it_client)[to_remove] << '\n';
-//                 /*for (; it_client != it_chan->second.end(); it_client++) {
-//                         if ((*it_client)->getFd() == to_remove->getFd()){
-//                           std::cout << "client found : " << *it_client.getNick() << *it_client.getFd()  << '\n';
-//                           *it_chan->second.erase(it_client);
-//                         }
-//
-//                 }*/
-//         }
-//
-// }
 
 int Server::opercmd(Message &msg, int fd) {
         if (msg.getParams().size() != 2) {
