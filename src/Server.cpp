@@ -43,13 +43,14 @@ void Server::on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd) 
         std::cout << inet_ntoa(_v_clients.back().getInfo().sin_addr) << " -> Ip adress of new_user" << std::endl;
 }
 
-bool Server::bufferComplete(int fd, char [5000]buf){
-    std::string s(buf);
+bool Server::bufferComplete(int fd, char buf[5000]) {
+        std::string s(buf);
 
-    _m_fdbuffer[fd] += s;
-    if (_m_fdbuffer[fd].find('\n') == std::string::npos()){
-
-    }
+        _m_fdbuffer[fd] += s;
+        if (_m_fdbuffer[fd].find('\n') == std::string::npos) {
+                return (false);
+        }
+        return(true);
 
 }
 
@@ -101,9 +102,11 @@ void Server::loop(void)
                                         // on_message(it_fd, &ret_val);
                                         /* read incoming data */
                                         std::cout << "Listening from fd-> " << *it_fd << std::endl;
+                                        if (_m_fdbuffer[*it_fd].find('\n') != std::string::npos) {
+                                                _m_fdbuffer[*it_fd].erase();
+                                        }
                                         ret_val = recv(*it_fd, _buf, DATA_BUFFER, 0);
-                                        ret_val >= 2 ? _buf[ret_val - 1] = 0 : _buf[ret_val] = 0;
-
+                                        /*ret_val >= 2 ? _buf[ret_val] = 0 : */_buf[ret_val] = 0;
                                         if (ret_val == 0)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
@@ -118,7 +121,9 @@ void Server::loop(void)
                                         if (ret_val > 0)
                                         {
                                                 std::cout << _buf << std::endl;
-                                                std::string response = executionner(_buf, mess, *it_fd);
+                                                if (bufferComplete(*it_fd, _buf)) {
+                                                        std::string response = executionner(_m_fdbuffer[*it_fd], mess, *it_fd);
+                                                }
                                                 break;
                                         }
                                         if (ret_val == -1)
@@ -133,7 +138,7 @@ void Server::loop(void)
                         } /* for-loop */
                 } /* (ret_val >= 0) */
                 else {
-                  return ;
+                        return;
                 }
         } /* while(1) */
 }
@@ -216,22 +221,21 @@ int Server::create_tcp_server_socket(int port)
         return fd;
 }
 
-std::string Server::executionner(char buf[5000], Message &message, int fd)
+std::string Server::executionner(std::string buf_str, Message &message, int fd)
 {
-        std::string buf_str(buf);
         if (buf_str.size() >= 2)
         {
-          std::list<std::string> list_cmd;
-          std::list<std::string>::iterator it;
+                std::list<std::string> list_cmd;
+                std::list<std::string>::iterator it;
 
-          list_cmd = split_every_char(buf_str, '\n');
-          it = list_cmd.begin();
-          for (; it != list_cmd.end(); it++)
-          {
-            message.parsing_cmd(*it);
-            message.display();
-            do_cmd(message, fd);
-          }
+                list_cmd = split_every_char(buf_str, '\n');
+                it = list_cmd.begin();
+                for (; it != list_cmd.end(); it++)
+                {
+                        message.parsing_cmd(*it);
+                        message.display();
+                        do_cmd(message, fd);
+                }
         }
         return(""); // sert a rien ?
 }
