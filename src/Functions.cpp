@@ -219,10 +219,9 @@ int Server::passcmd(Message & msg, int fd) {
                 else if (msg.getParams().front() == _password) {
                         _m_prefixclient.insert(std::pair<std::string, Client>(s, find_CfromFd(fd)));
                         _m_prefixclient[s].setCorr(true);
-                        send_privmsg(fd, "You can now register with NICK then USER.\n");
                 }
                 else {
-                        send_privmsg(fd, "Wrong Password\n");
+                        send_privmsg(fd, "Wrong Password\n"); // erreur
                         std::cout << "bad pass" << '\n';
                 }
         }
