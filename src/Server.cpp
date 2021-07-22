@@ -106,7 +106,7 @@ void Server::loop(void)
                                                 _m_fdbuffer[*it_fd].erase();
                                         }
                                         ret_val = recv(*it_fd, _buf, DATA_BUFFER, 0);
-                                        /*ret_val >= 2 ? _buf[ret_val] = 0 : */_buf[ret_val] = 0;
+                                        /*ret_val >= 2 ? _buf[ret_val] = 0 : */ _buf[ret_val] = 0;
                                         if (ret_val == 0)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;

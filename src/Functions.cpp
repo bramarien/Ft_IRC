@@ -236,41 +236,43 @@ int Server::usercmd(Message &msg, int fd) {
         std::string s(ft_itoa(fd));
 
         //if () user deja register -- >ERR_ALREADYREGISTERED // wrong parameters // pass
-        if (msg.getParams().size() == 4) {
-                if (_m_prefixclient[s].getReg() == false) {
-                        if (_m_prefixclient[s].getReg()) {
-                                std::cout << "erreur" << '\n';
-                        }
-                        // nb params
-                        _m_prefixclient[s].setUser(msg.getParams().front());
-                        _m_prefixclient[s].setReal(msg.getParams().back());
-                        std::string prefix;
+        if (_m_prefixclient[s].getNickstatus() == true) {
+                if (msg.getParams().size() == 4) {
+                        if (_m_prefixclient[s].getReg() == false) {
+                                if (_m_prefixclient[s].getReg()) {
+                                        std::cout << "erreur" << '\n';
+                                }
+                                // nb params
+                                _m_prefixclient[s].setUser(msg.getParams().front());
+                                _m_prefixclient[s].setReal(msg.getParams().back());
+                                std::string prefix;
 
 
-                        prefix = _m_prefixclient[s].getUser();
-                        prefix += "!";
-                        prefix += _m_prefixclient[s].getReal();
-                        std::cout << _m_prefixclient[s].getReal() << '\n';
-                        prefix += "@";
-                        prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
-                        //std::string prefix(_m_prefixclient[s].username + "!" + _)
-                        // tous les champs user ! real @ host
-                        std::cout << prefix << '\n';
-                        _m_fdprefix[fd] = prefix;
-                        _m_prefixclient[prefix] = _m_prefixclient[s];
-                        send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
-                        _m_prefixclient[prefix].setUserstatus(true);
-                        _m_prefixclient[prefix].setFd(fd);
-                        if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()) {
-                                _m_prefixclient[prefix].setReg(true);
+                                prefix = _m_prefixclient[s].getUser();
+                                prefix += "!";
+                                prefix += _m_prefixclient[s].getReal();
+                                std::cout << _m_prefixclient[s].getReal() << '\n';
+                                prefix += "@";
+                                prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
+                                //std::string prefix(_m_prefixclient[s].username + "!" + _)
+                                // tous les champs user ! real @ host
+                                std::cout << prefix << '\n';
+                                _m_fdprefix[fd] = prefix;
+                                _m_prefixclient[prefix] = _m_prefixclient[s];
+                                send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
+                                _m_prefixclient[prefix].setUserstatus(true);
+                                _m_prefixclient[prefix].setFd(fd);
+                                if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()) {
+                                        _m_prefixclient[prefix].setReg(true);
+                                }
+                        }
+                        else{
+                                send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
                         }
                 }
-                else{
-                        send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
+                else {
+                        send_err(fd, ERR_NEEDMOREPARAMS, " <USER> :Not enough parameters\n");
                 }
-        }
-        else {
-                send_err(fd, ERR_NEEDMOREPARAMS, " <USER> :Not enough parameters\n");
         }
         return(0);
 }
@@ -287,23 +289,38 @@ bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
 
 void Server::remove_Cinchans(int fd)
 {
-        std::map<std::string, std::vector<Client*> >::iterator it = chan.begin();
-        if (chan.size() >= 1) {
-                for(; it != chan.end(); it++) {
-                        remove_Cinchan(fd, it->second);
-                }
-        }
+  std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
+  for (; it_chan != chan.end(); it_chan++) {
+    if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
+            std::vector<Client*>::iterator it_cli = it_chan->second.begin();
+            for (; it_cli != it_chan->second.end(); it_cli++) {
+                    if ((**it_cli).getNick() == _m_prefixclient[_m_fdprefix[fd]].getNick()) {
+                            std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
+                            break;
+                    }
+            }
+            if (it_cli != it_chan->second.end()) {
+              if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
+                chan_oper.erase(it_chan->first);
+              }
+              it_chan->second.erase(it_cli);
+            }
+    }
+  }
 }
 
 void Server::remove_Cinchan(int fd, std::vector<Client*> vect)
 {
-        std::vector<Client*>::iterator it = vect.begin();
-        for(; it != vect.end(); it++) {
-                if((**it).getNick() == _m_prefixclient[_m_fdprefix[fd]].getNick()) {
-                        vect.erase(it);
-                        return;
-                }
-        }
+        // std::vector<Client*>::iterator it_cli = vect.begin();
+        // for (; it_cli != vect.end(); it_cli++) {
+        //         if ((**it_cli).getNick() == _m_prefixclient[_m_fdprefix[fd]].getNick()) {
+        //                 std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
+        //                 break;
+        //         }
+        // }
+        // if (it_cli != vect.end()) {
+        //         it_chan->second.erase(it_cli);
+        // }
 }
 
 void Server::sendtoAll(std::vector<Client*> at, std::string msg)
