@@ -123,6 +123,7 @@ void Server::loop(void)
                                         {
                                                 std::cout << _buf << std::endl;
                                                 if (bufferComplete(*it_fd, _buf)) {
+                                                        _m_fdbuffer[*it_fd].erase(std::remove(_m_fdbuffer[*it_fd].begin(), _m_fdbuffer[*it_fd].end(), '\r'), _m_fdbuffer[*it_fd].end());
                                                         std::string response = executionner(_m_fdbuffer[*it_fd], mess, *it_fd);
                                                 }
                                                 break;
