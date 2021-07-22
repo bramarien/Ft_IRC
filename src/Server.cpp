@@ -110,6 +110,7 @@ void Server::loop(void)
                                         if (ret_val == 0)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
+                                                remove_Cinchans(*it_fd);
                                                 _m_prefixclient.erase(ft_itoa(*it_fd));
                                                 _m_fdprefix.erase(*it_fd);
                                                 clearClient(*it_fd);

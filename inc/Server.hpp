@@ -71,6 +71,7 @@ std::string getPass(void) const {
 }
 
 //Functions
+int namecmd(Message &msg, int fd);
 int kickcmd(Message &msg, int fd);
 int listcmd(Message &msg, int fd);
 std::string getmsg(Message &msg, int fd);
@@ -89,6 +90,8 @@ bool  find_Cinchan(int fd, std::vector<Client*> vect);
 std::list<std::string> split_every_char(std::string str, char separator);
 void dispMemberName(int fd, std::string chan_name);
 bool bufferComplete(int fd, char buf[5000]);
+void remove_Cinchans(int fd);
+void remove_Cinchan(int fd, std::vector<Client*> vect);
 };
 
 // std::ostream &			operator<<( std::ostream & o, Server const & i );

@@ -1,49 +1,90 @@
 #include "../inc/Server.hpp"
 // #include "../inc/main.hpp"
 
+int Server::namecmd(Message &msg, int fd) {
+        if (msg.getParams().size() == 1) {
+                std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
+                std::list<std::string>::iterator it_recv = receiver_list.begin();
+                std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
+                std::string list_tosend = "";
+                for (; it_recv != receiver_list.end(); it_recv++) {
+                        it_chan = chan.begin();
+                        for (; it_chan != chan.end(); it_chan++) {
+                                if (it_chan->first == *it_recv) {
+                                        list_tosend.append( "<" + it_chan->first + "> :");
+                                        std::vector<Client*>::iterator it_cli = it_chan->second.begin();
+                                        for (; it_cli != it_chan->second.end(); it_cli++) {
+                                                if ((*it_cli)->getNick() == chan_oper[it_chan->first]) {
+                                                        list_tosend.append("@<" + (*it_cli)->getNick() + "> ");
+                                                }
+                                                else {
+                                                        list_tosend.append("<" + (*it_cli)->getNick() + "> ");
+                                                }
+                                        }
+                                        list_tosend.append("\n");
+                                }
+                        }
+                }
+                send_privmsg(fd, list_tosend);
+        }
+        return (0);
+}
+
 int Server::listcmd(Message &msg, int fd) {
-  return (0);
+        if (msg.getParams().size() == 0) {
+                std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
+                std::list<std::string>::iterator it_recv = receiver_list.begin();
+                std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
+                std::string list_tosend = "";
+                if (chan.size() >= 1) {
+                        for (; it_chan != chan.end(); it_chan++) {
+                                list_tosend.append(it_chan->first + ",");
+                        }
+                }
+                send_privmsg(fd, "Channel :\n" + list_tosend + "\n" + ":End of /LIST\n");
+        }
+        return (0);
 }
 
 int Server::kickcmd(Message &msg, int fd) {
-    if (msg.getParams().size() == 3) {
-      std::list<std::string> args = msg.getParams();
-      std::list<std::string>::iterator it_args;
-      it_args = args.begin();
-      std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
-      for (; it_chan != chan.end(); it_chan++) {
-        if (it_chan->first == msg.getParams().front())
-          break;
-      }
-      if (it_chan != chan.end()) {
-        if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
-          it_args++;
-          std::vector<Client*>::iterator it_cli = it_chan->second.begin();
-          for (; it_cli != it_chan->second.end(); it_cli++) {
-            if ((**it_cli).getNick() == *it_args) {
-              std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
-              break;
-            }
-          }
-          if (it_cli != it_chan->second.end()) {
-            it_chan->second.erase(it_cli);
-          }
-          else {
-            send_err(fd, ERR_NOSUCHNICK, " <" + *it_args + "> :No such nick in the channel " + it_chan->first + "\n");
-          }
+        if (msg.getParams().size() == 3) {
+                std::list<std::string> args = msg.getParams();
+                std::list<std::string>::iterator it_args;
+                it_args = args.begin();
+                std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
+                for (; it_chan != chan.end(); it_chan++) {
+                        if (it_chan->first == msg.getParams().front())
+                                break;
+                }
+                if (it_chan != chan.end()) {
+                        if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
+                                it_args++;
+                                std::vector<Client*>::iterator it_cli = it_chan->second.begin();
+                                for (; it_cli != it_chan->second.end(); it_cli++) {
+                                        if ((**it_cli).getNick() == *it_args) {
+                                                std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
+                                                break;
+                                        }
+                                }
+                                if (it_cli != it_chan->second.end()) {
+                                        it_chan->second.erase(it_cli);
+                                }
+                                else {
+                                        send_err(fd, ERR_NOSUCHNICK, " <" + *it_args + "> :No such nick in the channel " + it_chan->first + "\n");
+                                }
+                        }
+                        else {
+                                send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an operator of " + it_chan->first + " channel \n");
+                        }
+                }
+                else {
+                        send_err(fd, ERR_NOSUCHCHANNEL, "<" + msg.getParams().front() + "> :No such channel\n");
+                }
         }
         else {
-          send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an operator of " + it_chan->first + " channel \n");
+                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 3 paramaters\n");
         }
-      }
-      else {
-        send_err(fd, ERR_NOSUCHCHANNEL, "<" + msg.getParams().front() + "> :No such channel\n");
-      }
-    }
-    else {
-      send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 3 paramaters\n");
-    }
-    return (0);
+        return (0);
 }
 
 int Server::killcmd(Message &msg, int fd) {
@@ -65,6 +106,7 @@ int Server::killcmd(Message &msg, int fd) {
                                 if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
                                         std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
                                         send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\n");
+                                        remove_Cinchans(it_clients->second.getFd());
                                         _m_fdprefix.erase(it_clients->second.getFd());
                                         clearClient(it_clients->second.getFd());
                                         close(it_clients->second.getFd());
@@ -243,6 +285,27 @@ bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
         return(false);
 }
 
+void Server::remove_Cinchans(int fd)
+{
+        std::map<std::string, std::vector<Client*> >::iterator it = chan.begin();
+        if (chan.size() >= 1) {
+                for(; it != chan.end(); it++) {
+                        remove_Cinchan(fd, it->second);
+                }
+        }
+}
+
+void Server::remove_Cinchan(int fd, std::vector<Client*> vect)
+{
+        std::vector<Client*>::iterator it = vect.begin();
+        for(; it != vect.end(); it++) {
+                if((**it).getNick() == _m_prefixclient[_m_fdprefix[fd]].getNick()) {
+                        vect.erase(it);
+                        return;
+                }
+        }
+}
+
 void Server::sendtoAll(std::vector<Client*> at, std::string msg)
 {
         std::vector<Client*>::iterator client = at.begin();
@@ -259,11 +322,11 @@ std::string Server::getmsg(Message &msg, int fd)
 {
         std::list<std::string> params = msg.getParams();
         std::string msg_tosend;
-        if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true){
-          msg_tosend = "From @" + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
+        if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
+                msg_tosend = "From @" + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
         }
         else{
-          msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
+                msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
         }
         std::list<std::string>::iterator it = params.begin();
         it++;
@@ -422,6 +485,9 @@ int Server::do_cmd(Message msg, int fd){
                         }
                         else if (msg.getCmd() == "KICK") {
                                 kickcmd(msg, fd);
+                        }
+                        else if (msg.getCmd() == "NAME") {
+                                namecmd(msg, fd);
                         }
                         if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
                                 if (msg.getCmd() == "KILL")
