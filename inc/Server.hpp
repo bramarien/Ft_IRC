@@ -71,6 +71,7 @@ std::string getPass(void) const {
 }
 
 //Functions
+int squitcmd(Message &msg, int fd);
 int namecmd(Message &msg, int fd);
 int kickcmd(Message &msg, int fd);
 int listcmd(Message &msg, int fd);

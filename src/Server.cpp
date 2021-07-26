@@ -41,6 +41,7 @@ void Server::on_connection(sockaddr_in new_addr, socklen_t addrlen, int new_fd) 
         this->_socket_fd.push_back(new_fd);
         this->_v_clients.push_back(*new_user);
         std::cout << inet_ntoa(_v_clients.back().getInfo().sin_addr) << " -> Ip adress of new_user" << std::endl;
+				delete new_user;
 }
 
 bool Server::bufferComplete(int fd, char buf[5000]) {

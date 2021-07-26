@@ -1,6 +1,10 @@
 #include "../inc/Server.hpp"
 // #include "../inc/main.hpp"
 
+int Server::squitcmd(Message &msg, int fd) {
+	exit(0);
+}
+
 int Server::namecmd(Message &msg, int fd) {
         if (msg.getParams().size() == 1) {
                 std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
@@ -507,6 +511,8 @@ int Server::do_cmd(Message msg, int fd){
                         if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
                                 if (msg.getCmd() == "KILL")
                                         killcmd(msg, fd);
+																else if (msg.getCmd() == "SQUIT")
+																				squitcmd(msg, fd);
                         }
                 }
                 else
