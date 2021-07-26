@@ -170,7 +170,7 @@ bool Server::nick_check(std::string &nick, int fd){
         std::map<std::string, Client>::iterator it = this->_m_prefixclient.begin();
         while(it != this->_m_prefixclient.end()) {
                 std::cout << (it->second.getNick()) << '\n';
-                if (it->second.getNick() == nick && it->second.getFd() != 0) {
+                if (it->second.getNick() == nick && it->second.getFd() > 0) {
                         return false;
                 }
                 it++;
@@ -192,6 +192,9 @@ int Server::nickcmd(Message msg, int fd){
         else if (nick_check(msg.getParams().front(), fd) == false) {
                 send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\n");
         }
+				else if (_m_prefixclient[_m_fdprefix[fd]].getReg()) {
+								_m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
+				}
         else {
                 _m_prefixclient[s].setNick(msg.getParams().front());
                 _m_prefixclient[s].setNickstatus(true);
@@ -263,6 +266,7 @@ int Server::usercmd(Message &msg, int fd) {
                                 _m_prefixclient[prefix].setFd(fd);
                                 if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()) {
                                         _m_prefixclient[prefix].setReg(true);
+																				_m_prefixclient[s].setFd(-1);
 																}
                                 send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
                         }
