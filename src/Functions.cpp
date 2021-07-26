@@ -2,7 +2,7 @@
 // #include "../inc/main.hpp"
 
 int Server::squitcmd(Message &msg, int fd) {
-	exit(0);
+        exit(0);
 }
 
 int Server::namecmd(Message &msg, int fd) {
@@ -170,7 +170,7 @@ bool Server::nick_check(std::string &nick, int fd){
         std::map<std::string, Client>::iterator it = this->_m_prefixclient.begin();
         while(it != this->_m_prefixclient.end()) {
                 std::cout << (it->second.getNick()) << '\n';
-                if (it->second.getNick() == nick && it->second.getFd() > 0) {
+                if (it->second.getNick() == nick && it->second.getFd() != 0) {
                         return false;
                 }
                 it++;
@@ -192,9 +192,6 @@ int Server::nickcmd(Message msg, int fd){
         else if (nick_check(msg.getParams().front(), fd) == false) {
                 send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\n");
         }
-				else if (_m_prefixclient[_m_fdprefix[fd]].getReg()) {
-								_m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
-				}
         else {
                 _m_prefixclient[s].setNick(msg.getParams().front());
                 _m_prefixclient[s].setNickstatus(true);
@@ -266,8 +263,7 @@ int Server::usercmd(Message &msg, int fd) {
                                 _m_prefixclient[prefix].setFd(fd);
                                 if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()) {
                                         _m_prefixclient[prefix].setReg(true);
-																				_m_prefixclient[s].setFd(-1);
-																}
+                                }
                                 send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
                         }
                         else{
@@ -295,20 +291,20 @@ void Server::remove_Cinchans(int fd)
 {
         std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
         for (; it_chan != chan.end(); it_chan++) {
-                        std::vector<Client*>::iterator it_cli = it_chan->second.begin();
-                        for (; it_cli != it_chan->second.end(); it_cli++) {
-                                if ((**it_cli).getFd() == _m_prefixclient[_m_fdprefix[fd]].getFd()) {
-                                        std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
-                                        break;
-                                }
+                std::vector<Client*>::iterator it_cli = it_chan->second.begin();
+                for (; it_cli != it_chan->second.end(); it_cli++) {
+                        if ((**it_cli).getFd() == _m_prefixclient[_m_fdprefix[fd]].getFd()) {
+                                sendtoAll(fd, (it_chan)->second, ":" + _m_fdprefix[fd] + " QUIT :Client closed connection\n");
+                                std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
+                                break;
                         }
-                        if (it_cli != it_chan->second.end()) {
-                                if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
-                                        sendtoAll(fd, (*it_chan).second, ":" + _m_fdprefix[fd] + " QUIT :Client closed connection\n");
-                                        chan_oper.erase(it_chan->first);
-                                }
-                                it_chan->second.erase(it_cli);
+                }
+                if (it_cli != it_chan->second.end()) {
+                        if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
+                                chan_oper.erase(it_chan->first);
                         }
+                        it_chan->second.erase(it_cli);
+                }
         }
 }
 
@@ -364,7 +360,7 @@ void Server::privmsg(Message &msg, int fd)
                         std::cout << "it_recv -> " << *it_recv << std::endl;
                         if ((*it_recv)[0] == '#') {
                                 if (chan.find(*it_recv) != chan.end()) {
-                                        sendtoAll(fd, chan[*it_recv], msg_tosend);
+                                        sendtoAllbutme(fd, chan[*it_recv], msg_tosend);
                                 }
                                 else {
                                         send_err(fd, ERR_CANNOTSENDTOCHAN, "<" + *it_recv + "> :Cannot send to channel\n");
@@ -507,8 +503,8 @@ int Server::do_cmd(Message msg, int fd){
                         if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
                                 if (msg.getCmd() == "KILL")
                                         killcmd(msg, fd);
-																else if (msg.getCmd() == "SQUIT")
-																				squitcmd(msg, fd);
+                                else if (msg.getCmd() == "SQUIT")
+                                        squitcmd(msg, fd);
                         }
                 }
                 else
