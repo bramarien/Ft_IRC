@@ -1,6 +1,25 @@
 #include "../inc/Server.hpp"
 // #include "../inc/main.hpp"
 
+int Server::quitcmd(Message &msg, int fd) {
+        std::cout << "Closing connection for " << _m_prefixclient[_m_fdprefix[fd]].getNick() << std::endl;
+				std::string s(ft_itoa(fd));
+        remove_Cinchans(fd);
+				_m_prefixclient.erase(s);
+        _m_fdprefix.erase(fd);
+        clearClient(fd);
+        for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++) {
+                if (*it == _m_prefixclient[_m_fdprefix[fd]].getFd()) {
+                        _socket_fd.erase(it);
+                        break;
+                }
+        }
+        std::cout << "User : " << _m_prefixclient[_m_fdprefix[fd]].getNick() << " has been KILL" << std::endl;
+        _m_prefixclient.erase(_m_fdprefix[fd]);
+
+        return (0);
+}
+
 int Server::squitcmd(Message &msg, int fd) {
         exit(0);
 }
@@ -122,6 +141,8 @@ int Server::killcmd(Message &msg, int fd) {
                                                 }
                                         }
                                         std::cout << "User : " << it_clients->second.getNick() << " has been KILL" << std::endl;
+																				std::string s(ft_itoa(fd));
+																				_m_prefixclient.erase(s);
                                         _m_prefixclient.erase(it_clients);
                                         break;
                                 }
@@ -170,7 +191,7 @@ bool Server::nick_check(std::string &nick, int fd){
         std::map<std::string, Client>::iterator it = this->_m_prefixclient.begin();
         while(it != this->_m_prefixclient.end()) {
                 std::cout << (it->second.getNick()) << '\n';
-                if (it->second.getNick() == nick && it->second.getFd() != 0) {
+                if (it->second.getNick() == nick && it->second.getFd() > 0) {
                         return false;
                 }
                 it++;
@@ -234,6 +255,10 @@ int Server::passcmd(Message & msg, int fd) {
         return(0);
 }
 
+void Server::pingcmd(Message & msg, int fd) {
+        send_privmsg(fd, "PONG " + msg.getParams().front() + msg.getParams().back());
+}
+
 int Server::usercmd(Message &msg, int fd) {
         std::string s(ft_itoa(fd));
 
@@ -263,6 +288,7 @@ int Server::usercmd(Message &msg, int fd) {
                                 _m_prefixclient[prefix].setFd(fd);
                                 if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()) {
                                         _m_prefixclient[prefix].setReg(true);
+                                        _m_prefixclient[s].setFd(-1);
                                 }
                                 send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
                         }
@@ -499,6 +525,12 @@ int Server::do_cmd(Message msg, int fd){
                         }
                         else if (msg.getCmd() == "NAME") {
                                 namecmd(msg, fd);
+                        }
+                        else if (msg.getCmd() == "PING") {
+                                pingcmd(msg, fd);
+                        }
+                        else if (msg.getCmd() == "QUIT") {
+                                quitcmd(msg, fd);
                         }
                         if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
                                 if (msg.getCmd() == "KILL")
