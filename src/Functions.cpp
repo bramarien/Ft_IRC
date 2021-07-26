@@ -250,14 +250,12 @@ int Server::usercmd(Message &msg, int fd) {
                                 std::string prefix;
 
 
-                                prefix = _m_prefixclient[s].getUser();
+                                prefix = _m_prefixclient[s].getNick();
                                 prefix += "!";
                                 prefix += _m_prefixclient[s].getReal();
                                 std::cout << _m_prefixclient[s].getReal() << '\n';
                                 prefix += "@";
                                 prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
-                                //std::string prefix(_m_prefixclient[s].username + "!" + _)
-                                // tous les champs user ! real @ host
                                 std::cout << prefix << '\n';
                                 _m_fdprefix[fd] = prefix;
                                 _m_prefixclient[prefix] = _m_prefixclient[s];
@@ -265,7 +263,7 @@ int Server::usercmd(Message &msg, int fd) {
                                 _m_prefixclient[prefix].setFd(fd);
                                 if (_m_prefixclient[prefix].getNickstatus() && _m_prefixclient[prefix].getUserstatus()) {
                                         _m_prefixclient[prefix].setReg(true);
-                                }
+																}
                                 send_privmsg(fd, ":irc.example.net 001 " + _m_prefixclient[prefix].getNick() + " :Welcome to the Internet Relay Network " + _m_fdprefix[fd] + "\n");
                         }
                         else{
@@ -302,6 +300,7 @@ void Server::remove_Cinchans(int fd)
                         }
                         if (it_cli != it_chan->second.end()) {
                                 if (_m_prefixclient[_m_fdprefix[fd]].getNick() == chan_oper[it_chan->first]) {
+                                        sendtoAll(fd, (*it_chan).second, ":" + _m_fdprefix[fd] + " QUIT :Client closed connection\n");
                                         chan_oper.erase(it_chan->first);
                                 }
                                 it_chan->second.erase(it_cli);
@@ -309,21 +308,19 @@ void Server::remove_Cinchans(int fd)
         }
 }
 
-void Server::remove_Cinchan(int fd, std::vector<Client*> vect)
+void Server::sendtoAllbutme(int fd, std::vector<Client*> at, std::string msg)
 {
-        // std::vector<Client*>::iterator it_cli = vect.begin();
-        // for (; it_cli != vect.end(); it_cli++) {
-        //         if ((**it_cli).getNick() == _m_prefixclient[_m_fdprefix[fd]].getNick()) {
-        //                 std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
-        //                 break;
-        //         }
-        // }
-        // if (it_cli != vect.end()) {
-        //         it_chan->second.erase(it_cli);
-        // }
+        std::vector<Client*>::iterator client = at.begin();
+        for (; client != at.end(); client++) {
+                // Client to_send = *(*client);
+                int fd_tmp = (*(*client)).getFd();
+                if (fd_tmp > 0 && fd != fd_tmp)
+                        send_privmsg(fd_tmp, msg + "\n");
+        }
+
 }
 
-void Server::sendtoAll(std::vector<Client*> at, std::string msg)
+void Server::sendtoAll(int fd, std::vector<Client*> at, std::string msg)
 {
         std::vector<Client*>::iterator client = at.begin();
         for (; client != at.end(); client++) {
@@ -335,16 +332,11 @@ void Server::sendtoAll(std::vector<Client*> at, std::string msg)
 
 }
 
-std::string Server::getmsg(Message &msg, int fd)
+std::string Server::getmsg(Message &msg, int fd, std::string name)
 {
         std::list<std::string> params = msg.getParams();
         std::string msg_tosend;
-        if (_m_prefixclient[_m_fdprefix[fd]].getOp() == true) {
-                msg_tosend = "From @" + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
-        }
-        else{
-                msg_tosend = "From " + _m_prefixclient[_m_fdprefix[fd]].getNick() + " : ";
-        }
+        msg_tosend = ":" + _m_fdprefix[fd] + " PRIVMSG " + name + " : ";
         std::list<std::string>::iterator it = params.begin();
         it++;
         if (params.size() == 2) {
@@ -360,15 +352,15 @@ void Server::privmsg(Message &msg, int fd)
 {
         if (msg.getParams().size() >= 2) {
                 std::cout << "privmsg" << std::endl;
-                std::string msg_tosend = getmsg(msg, fd);
                 std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
                 std::list<std::string>::iterator it_recv = receiver_list.begin();
                 while(it_recv != receiver_list.end())
                 {
+                        std::string msg_tosend = getmsg(msg, fd, *it_recv);
                         std::cout << "it_recv -> " << *it_recv << std::endl;
                         if ((*it_recv)[0] == '#') {
                                 if (chan.find(*it_recv) != chan.end()) {
-                                        sendtoAll(chan[*it_recv], msg_tosend);
+                                        sendtoAll(fd, chan[*it_recv], msg_tosend);
                                 }
                                 else {
                                         send_err(fd, ERR_CANNOTSENDTOCHAN, "<" + *it_recv + "> :Cannot send to channel\n");
@@ -433,7 +425,7 @@ int Server::joincmd(Message &msg, int fd)
                                                 {
                                                         Client *temp = &(_m_prefixclient[_m_fdprefix[fd]]);
                                                         chan.find(chan_name)->second.push_back(temp);
-                                                        sendtoAll(chan[chan_name], ":" + _m_fdprefix[fd] + " JOIN :" + chan_name);
+                                                        sendtoAll(fd, chan[chan_name], ":" + _m_fdprefix[fd] + " JOIN :" + chan_name);
                                                         dispMemberName(fd, chan_name);
 
                                                 }
@@ -454,7 +446,7 @@ int Server::joincmd(Message &msg, int fd)
                                                 chan_flag[chan_name] = "+m";
                                                 chan_pass[chan_name] = msg.getParams().back();
                                         }
-                                        sendtoAll(chan[chan_name], ":" +  _m_fdprefix[fd] + " JOIN :" + chan_name);
+                                        sendtoAll(fd, chan[chan_name], ":" +  _m_fdprefix[fd] + " JOIN :" + chan_name);
                                         dispMemberName(fd, chan_name);
                                         // sendtoAll(chan[chan_name], (static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) +  " lol")); //send to all
                                 }
