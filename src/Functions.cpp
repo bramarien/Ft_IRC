@@ -3,12 +3,12 @@
 
 int Server::quitcmd(Message &msg, int fd) {
         std::cout << "Closing connection for " << _m_prefixclient[_m_fdprefix[fd]].getNick() << std::endl;
-				std::string s(ft_itoa(fd));
+        std::string s(ft_itoa(fd));
         remove_Cinchans(fd);
-				_m_prefixclient.erase(s);
+        _m_prefixclient.erase(s);
         clearClient(fd);
-				close(fd);
-				FD_CLR(fd, &read_fd_set);
+        close(fd);
+        FD_CLR(fd, &read_fd_set);
         for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++) {
                 if (*it == _m_prefixclient[_m_fdprefix[fd]].getFd()) {
                         _socket_fd.erase(it);
@@ -17,8 +17,7 @@ int Server::quitcmd(Message &msg, int fd) {
         }
         std::cout << "User : " << _m_prefixclient[_m_fdprefix[fd]].getNick() << " has been KILL" << std::endl;
         _m_prefixclient.erase(_m_fdprefix[fd]);
-				_m_fdprefix.erase(fd);
-				// close(fd);
+        _m_fdprefix.erase(fd);
         return (0);
 }
 
@@ -143,8 +142,8 @@ int Server::killcmd(Message &msg, int fd) {
                                                 }
                                         }
                                         std::cout << "User : " << it_clients->second.getNick() << " has been KILL" << std::endl;
-																				std::string s(ft_itoa(fd));
-																				_m_prefixclient.erase(s);
+                                        std::string s(ft_itoa(fd));
+                                        _m_prefixclient.erase(s);
                                         _m_prefixclient.erase(it_clients);
                                         break;
                                 }
@@ -201,6 +200,7 @@ bool Server::nick_check(std::string &nick, int fd){
         return true;
 }
 
+
 int Server::nickcmd(Message msg, int fd){
         std::string s(ft_itoa(fd));
         if (msg.getParams().size() == 0) {
@@ -215,20 +215,20 @@ int Server::nickcmd(Message msg, int fd){
         else if (nick_check(msg.getParams().front(), fd) == false) {
                 send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\n");
         }
-				else if (_m_prefixclient[_m_fdprefix[fd]].getReg()){
-								_m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
-								std::string temp = _m_fdprefix[fd];
-								std::string prefix;
-								prefix = _m_prefixclient[_m_fdprefix[fd]].getNick();
-								prefix += "!";
-								prefix += _m_prefixclient[_m_fdprefix[fd]].getReal();
-								std::cout << _m_prefixclient[_m_fdprefix[fd]].getReal() << '\n';
-								prefix += "@";
-								prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
-								_m_fdprefix[fd] = prefix;
-								_m_prefixclient[_m_fdprefix[fd]] = _m_prefixclient[temp];
-								_m_prefixclient.erase(temp);
-				}
+        else if (_m_prefixclient[_m_fdprefix[fd]].getReg()) {
+                _m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
+                std::string temp = _m_fdprefix[fd];
+                std::string prefix;
+                prefix = _m_prefixclient[_m_fdprefix[fd]].getNick();
+                prefix += "!";
+                prefix += _m_prefixclient[_m_fdprefix[fd]].getReal();
+                std::cout << _m_prefixclient[_m_fdprefix[fd]].getReal() << '\n';
+                prefix += "@";
+                prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
+                _m_fdprefix[fd] = prefix;
+                _m_prefixclient[_m_fdprefix[fd]] = _m_prefixclient[temp];
+                _m_prefixclient.erase(temp);
+        }
         else {
                 _m_prefixclient[s].setNick(msg.getParams().front());
                 _m_prefixclient[s].setNickstatus(true);
