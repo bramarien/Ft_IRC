@@ -112,7 +112,9 @@ void Server::loop(void)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
                                                 remove_Cinchans(*it_fd);
-                                                _m_prefixclient.erase(ft_itoa(*it_fd));
+																								std::string s = ft_itoa(*it_fd);
+																								_m_prefixclient.erase(s);
+                                                _m_prefixclient.erase(_m_fdprefix[*it_fd]);
                                                 _m_fdprefix.erase(*it_fd);
                                                 clearClient(*it_fd);
                                                 close(*it_fd);

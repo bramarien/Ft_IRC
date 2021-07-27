@@ -6,8 +6,9 @@ int Server::quitcmd(Message &msg, int fd) {
 				std::string s(ft_itoa(fd));
         remove_Cinchans(fd);
 				_m_prefixclient.erase(s);
-        _m_fdprefix.erase(fd);
         clearClient(fd);
+				close(fd);
+				FD_CLR(fd, &read_fd_set);
         for (std::vector<int>::iterator it = _socket_fd.begin(); it != _socket_fd.end(); it++) {
                 if (*it == _m_prefixclient[_m_fdprefix[fd]].getFd()) {
                         _socket_fd.erase(it);
@@ -16,7 +17,8 @@ int Server::quitcmd(Message &msg, int fd) {
         }
         std::cout << "User : " << _m_prefixclient[_m_fdprefix[fd]].getNick() << " has been KILL" << std::endl;
         _m_prefixclient.erase(_m_fdprefix[fd]);
-
+				_m_fdprefix.erase(fd);
+				// close(fd);
         return (0);
 }
 
@@ -126,7 +128,7 @@ int Server::killcmd(Message &msg, int fd) {
                         std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
                         for (; it_clients != _m_prefixclient.end(); it_clients++) {
                                 int check = it_clients->second.getFd();
-                                if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
+                                if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() > 0) {
                                         std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
                                         send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\n");
                                         remove_Cinchans(it_clients->second.getFd());
@@ -169,7 +171,7 @@ int Server::opercmd(Message &msg, int fd) {
                 std::cout << "searching for clients" << '\n';
                 std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
                 for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                        if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() != 0) {
+                        if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() > 0) {
                                 it_clients->second.setOp(true);
                                 std::cout << "User : " << it_clients->second.getNick() << " has been OP" << std::endl;
                         }
@@ -213,6 +215,20 @@ int Server::nickcmd(Message msg, int fd){
         else if (nick_check(msg.getParams().front(), fd) == false) {
                 send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\n");
         }
+				else if (_m_prefixclient[_m_fdprefix[fd]].getReg()){
+								_m_prefixclient[_m_fdprefix[fd]].setNick(msg.getParams().front());
+								std::string temp = _m_fdprefix[fd];
+								std::string prefix;
+								prefix = _m_prefixclient[_m_fdprefix[fd]].getNick();
+								prefix += "!";
+								prefix += _m_prefixclient[_m_fdprefix[fd]].getReal();
+								std::cout << _m_prefixclient[_m_fdprefix[fd]].getReal() << '\n';
+								prefix += "@";
+								prefix += inet_ntoa(_v_clients.back().getInfo().sin_addr);
+								_m_fdprefix[fd] = prefix;
+								_m_prefixclient[_m_fdprefix[fd]] = _m_prefixclient[temp];
+								_m_prefixclient.erase(temp);
+				}
         else {
                 _m_prefixclient[s].setNick(msg.getParams().front());
                 _m_prefixclient[s].setNickstatus(true);
@@ -396,7 +412,7 @@ void Server::privmsg(Message &msg, int fd)
                                 std::cout << "searching for clients" << '\n';
                                 std::map<std::string, Client>::iterator it_clients = _m_prefixclient.begin();
                                 for (; it_clients != _m_prefixclient.end(); it_clients++) {
-                                        if (it_clients->second.getNick() == *it_recv && it_clients->second.getFd() != 0) {
+                                        if (it_clients->second.getNick() == *it_recv && it_clients->second.getFd() > 0) {
                                                 std::cout << "let's send some shit boy -> " << msg_tosend << std::endl;
                                                 std::cout << "fd found -> " << it_clients->second.getFd() << std::endl;
                                                 send_privmsg(it_clients->second.getFd(), msg_tosend + "\n");
