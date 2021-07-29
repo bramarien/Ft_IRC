@@ -19,6 +19,7 @@ Server::Server(int port, std::string pass) : _portnum(port), _password(pass)
         chan_flag.clear();
         chan_pass.clear();
 }
+
 Server::Server( Server const & src ) : _v_clients(src.getClients()), _portnum(src.getPort()), _password(src.getPass()){
 
 }

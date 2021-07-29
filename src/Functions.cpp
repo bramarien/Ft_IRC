@@ -84,6 +84,7 @@ int Server::kickcmd(Message &msg, int fd) {
                                 for (; it_cli != it_chan->second.end(); it_cli++) {
                                         if ((**it_cli).getNick() == *it_args) {
                                                 std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
+                                                sendtoAll(fd, it_chan->second , ":" + _m_fd2client[fd].getCprefix() + " KICK " + it_chan->first + " " + (**it_cli).getNick() + " :" + msg.getParams().back());
                                                 break;
                                         }
                                 }
@@ -208,6 +209,7 @@ int Server::nickcmd(Message msg, int fd){
                 send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\n");
         }
         else if (_m_fd2client[fd].getReg()) {
+                noticeNickInChans(fd, _m_fd2client[fd].getCprefix(), msg.getParams().front());
                 _m_fd2client[fd].setNick(msg.getParams().front());
                 std::string prefix;
                 prefix = _m_fd2client[fd].getNick();
@@ -304,6 +306,19 @@ int Server::usercmd(Message &msg, int fd) {
         return(0);
 }
 
+void Server::noticeNickInChans(int fd, std::string old_pref, std::string new_nick)
+{
+        std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
+        for (; it_chan != chan.end(); it_chan++) {
+                std::vector<Client*>::iterator it_cli = it_chan->second.begin();
+                for (; it_cli != it_chan->second.end(); it_cli++) {
+                        if ((**it_cli).getFd() == _m_fd2client[fd].getFd()) {
+                                sendtoAll(fd, (it_chan)->second, ":" + old_pref + " NICK :" + new_nick);
+                        }
+                }
+        }
+}
+
 bool Server::find_Cinchan(int fd, std::vector<Client*> vect)
 {
         std::vector<Client*>::iterator it = vect.begin();
@@ -321,7 +336,7 @@ void Server::remove_Cinchans(int fd)
                 std::vector<Client*>::iterator it_cli = it_chan->second.begin();
                 for (; it_cli != it_chan->second.end(); it_cli++) {
                         if ((**it_cli).getFd() == _m_fd2client[fd].getFd()) {
-                                sendtoAll(fd, (it_chan)->second, ":" + (**it_cli).getCprefix() + " QUIT :Client closed connection\n");
+                                sendtoAll(fd, (it_chan)->second, ":" + (**it_cli).getCprefix() + " QUIT :Client closed connection");
                                 std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
                                 break;
                         }
