@@ -3,8 +3,6 @@
 
 Server::Server() : _portnum(6667), _password("qwe"), read_fd_set(), mess(), _saddr(){
         _v_clients.clear();
-        _m_fdprefix.clear();
-        _m_prefixclient.clear();
         _socket_fd.clear();
         chan.clear();
         chan_oper.clear();
@@ -15,8 +13,6 @@ Server::Server() : _portnum(6667), _password("qwe"), read_fd_set(), mess(), _sad
 Server::Server(int port, std::string pass) : _portnum(port), _password(pass)
 {
         _v_clients.clear();
-        _m_fdprefix.clear();
-        _m_prefixclient.clear();
         _socket_fd.clear();
         chan.clear();
         chan_oper.clear();
@@ -112,10 +108,7 @@ void Server::loop(void)
                                         {
                                                 std::cout << "Closing connection for fd-> " << *it_fd << std::endl;
                                                 remove_Cinchans(*it_fd);
-																								std::string s = ft_itoa(*it_fd);
-																								_m_prefixclient.erase(s);
-                                                _m_prefixclient.erase(_m_fdprefix[*it_fd]);
-                                                _m_fdprefix.erase(*it_fd);
+                                                _m_fd2client.erase(*it_fd);
                                                 clearClient(*it_fd);
                                                 close(*it_fd);
                                                 FD_CLR(*it_fd, &read_fd_set);

@@ -25,6 +25,7 @@ std::string getNick(void) { return(this->nickname); }
 std::string getPass(void) { return(this->password); }
 std::string getReal(void) { return(this->realname); }
 std::string getUser(void) { return(this->username); }
+std::string getCprefix(void) { return(this->cprefix); }
 bool getCorr(void) { return(this->corr_pass); }
 bool getReg(void) { return(this->is_registered); }
 bool getNickstatus(void) { return(this->nickSet); }
@@ -43,11 +44,13 @@ void setReal(std::string src) { this->realname = src; }
 void setPass(std::string src) { this->password = src; }
 void setInfo(sockaddr_in src) { this->info = src; }
 void setFd(int src) { this->fd = src; }
+void setCprefix(std::string src) { this->cprefix = src; }
 
 private:
 sockaddr_in info;
 socklen_t len;
 int fd;
+std::string cprefix;
 std::string nickname;
 std::string username;
 std::string realname;

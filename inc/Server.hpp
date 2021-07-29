@@ -28,8 +28,7 @@ struct sockaddr_in _saddr;
 //tools for Server
 std::vector<Client> _v_clients;
 std::map<int, std::string> _m_fdbuffer;
-std::map<int, std::string> _m_fdprefix; // from fd to prefix ()
-std::map<std::string, Client> _m_prefixclient; // from prefix to definitive clients
+std::map<int, Client> _m_fd2client; // from prefix to definitive clients
 
 
 public:
@@ -71,7 +70,7 @@ std::string getPass(void) const {
 }
 
 //Functions
-int quitcmd(Message &msg, int fd);
+int quitcmd(int fd);
 int squitcmd(Message &msg, int fd);
 int namecmd(Message &msg, int fd);
 int kickcmd(Message &msg, int fd);
