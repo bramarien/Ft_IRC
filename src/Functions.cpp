@@ -26,27 +26,9 @@ int Server::namecmd(Message &msg, int fd) {
         if (msg.getParams().size() == 1) {
                 std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
                 std::list<std::string>::iterator it_recv = receiver_list.begin();
-                std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
-                std::string list_tosend = "";
                 for (; it_recv != receiver_list.end(); it_recv++) {
-                        it_chan = chan.begin();
-                        for (; it_chan != chan.end(); it_chan++) {
-                                if (it_chan->first == *it_recv) {
-                                        list_tosend.append( "<" + it_chan->first + "> :");
-                                        std::vector<Client*>::iterator it_cli = it_chan->second.begin();
-                                        for (; it_cli != it_chan->second.end(); it_cli++) {
-                                                if ((*it_cli)->getNick() == chan_oper[it_chan->first]) {
-                                                        list_tosend.append("@<" + (*it_cli)->getNick() + "> ");
-                                                }
-                                                else {
-                                                        list_tosend.append("<" + (*it_cli)->getNick() + "> ");
-                                                }
-                                        }
-                                        list_tosend.append("\n");
-                                }
-                        }
+                        dispMemberName(fd, *it_recv);
                 }
-                send_privmsg(fd, list_tosend);
         }
         return (0);
 }
@@ -57,7 +39,7 @@ int Server::listcmd(Message &msg, int fd) {
                 std::list<std::string>::iterator it_recv = receiver_list.begin();
                 std::string list_tosend = "";
                 if (chan.size() >= 1) {
-                  std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
+                        std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
                         for (; it_chan != chan.end(); it_chan++) {
                                 list_tosend.append(it_chan->first + ",");
                         }
@@ -84,7 +66,7 @@ int Server::kickcmd(Message &msg, int fd) {
                                 for (; it_cli != it_chan->second.end(); it_cli++) {
                                         if ((**it_cli).getNick() == *it_args) {
                                                 std::cout << "USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
-                                                sendtoAll(fd, it_chan->second , ":" + _m_fd2client[fd].getCprefix() + " KICK " + it_chan->first + " " + (**it_cli).getNick() + " :" + msg.getParams().back());
+                                                sendtoAll(fd, it_chan->second, ":" + _m_fd2client[fd].getCprefix() + " KICK " + it_chan->first + " " + (**it_cli).getNick() + " :" + msg.getParams().back());
                                                 break;
                                         }
                                 }
@@ -262,7 +244,7 @@ int Server::passcmd(Message & msg, int fd) {
 }
 
 void Server::pingcmd(Message & msg, int fd) {
-        send_privmsg(fd, "PONG " + msg.getParams().front() + msg.getParams().back());
+        send_privmsg(fd, "PONG " + msg.getParams().front() + msg.getParams().back() + "\r\n");
 }
 
 int Server::usercmd(Message &msg, int fd) {
@@ -365,11 +347,14 @@ void Server::sendtoAllbutme(int fd, std::vector<Client*> at, std::string msg)
 void Server::sendtoAll(int fd, std::vector<Client*> at, std::string msg)
 {
         std::vector<Client*>::iterator client = at.begin();
+        std::cout << "Sending to everyone : " << "\'" << msg << "\'" << '\n';
         for (; client != at.end(); client++) {
                 // Client to_send = *(*client);
                 int fd_tmp = (*(*client)).getFd();
-                if (fd_tmp > 0)
-                        send_privmsg(fd_tmp, msg + "\n");
+                if (fd_tmp > 0) {
+                        std::cout << (*(*client)).getNick() << "\t" << (*(*client)).getFd() << '\n';
+                        send_privmsg(fd_tmp, msg + "\r\n");
+                }
         }
 
 }
@@ -538,7 +523,7 @@ int Server::do_cmd(Message msg, int fd){
                         else if (msg.getCmd() == "KICK") {
                                 kickcmd(msg, fd);
                         }
-                        else if (msg.getCmd() == "NAME") {
+                        else if (msg.getCmd() == "NAMES") {
                                 namecmd(msg, fd);
                         }
                         else if (msg.getCmd() == "PING") {

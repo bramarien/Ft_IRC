@@ -34,6 +34,7 @@ void Message::display() {
                 std::cout << *it;
                 i++;
         }
+        std::cout << '\n';
 
 }
 
