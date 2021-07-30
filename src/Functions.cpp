@@ -44,7 +44,7 @@ int Server::listcmd(Message &msg, int fd) {
                                 list_tosend.append(it_chan->first + ",");
                         }
                 }
-                send_privmsg(fd, "Channel :\n" + list_tosend + "\n" + ":End of /LIST\n");
+                send_privmsg(fd, "Channel :\n" + list_tosend + "\n" + ":End of /LIST\r\n");
         }
         return (0);
 }
@@ -74,19 +74,19 @@ int Server::kickcmd(Message &msg, int fd) {
                                         it_chan->second.erase(it_cli);
                                 }
                                 else {
-                                        send_err(fd, ERR_NOSUCHNICK, " <" + *it_args + "> :No such nick in the channel " + it_chan->first + "\n");
+                                        send_err(fd, ERR_NOSUCHNICK, " <" + *it_args + "> :No such nick in the channel " + it_chan->first + "\r\n");
                                 }
                         }
                         else {
-                                send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an operator of " + it_chan->first + " channel \n");
+                                send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an operator of " + it_chan->first + " channel \r\n");
                         }
                 }
                 else {
-                        send_err(fd, ERR_NOSUCHCHANNEL, "<" + msg.getParams().front() + "> :No such channel\n");
+                        send_err(fd, ERR_NOSUCHCHANNEL, "<" + msg.getParams().front() + "> :No such channel\r\n");
                 }
         }
         else {
-                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 3 paramaters\n");
+                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 3 paramaters\r\n");
         }
         return (0);
 }
@@ -95,12 +95,12 @@ int Server::killcmd(Message &msg, int fd) {
         if (_m_fd2client[fd].getOp() == true) {
                 if (msg.getParams().size() != 2) {
                         if (msg.getParams().size() > 2)
-                                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
+                                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\r\n");
                         else
-                                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
+                                send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\r\n");
                 }
                 else if (nick_check(msg.getParams().front(), fd) == true) {
-                        send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
+                        send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\r\n");
                 }
                 else {
                         std::cout << "searching for clients" << '\n';
@@ -109,7 +109,7 @@ int Server::killcmd(Message &msg, int fd) {
                                 int check = it_clients->second.getFd();
                                 if (it_clients->second.getNick() == msg.getParams().front() && it_clients->second.getFd() > 0) {
                                         std::cout << "Closing connection for " << it_clients->second.getNick() << std::endl;
-                                        send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\n");
+                                        send_privmsg(it_clients->second.getFd(), "you got killed : " + msg.getParams().back() + "\r\n");
                                         remove_Cinchans(it_clients->second.getFd());
                                         clearClient(it_clients->second.getFd());
                                         close(it_clients->second.getFd());
@@ -128,7 +128,7 @@ int Server::killcmd(Message &msg, int fd) {
                 }
         }
         else {
-                send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an IRC operator\n");
+                send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an IRC operator\r\n");
         }
         return (0);
 }
@@ -136,12 +136,12 @@ int Server::killcmd(Message &msg, int fd) {
 int Server::opercmd(Message &msg, int fd) {
         if (msg.getParams().size() != 2) {
                 if (msg.getParams().size() > 2)
-                        send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\n");
+                        send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 2 paramaters\r\n");
                 else
-                        send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\n");
+                        send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Not enough parameters, need 2 paramaters\r\n");
         }
         else if (nick_check(msg.getParams().front(), fd) == true) {
-                send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\n");
+                send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick\r\n");
         }
         else if (msg.getParams().back() == OPERATOR_PW) {
                 std::cout << "searching for clients" << '\n';
@@ -154,7 +154,7 @@ int Server::opercmd(Message &msg, int fd) {
                 }
         }
         else {
-                send_err(fd, ERR_PASSWDMISMATCH, " :Password incorrect\n");
+                send_err(fd, ERR_PASSWDMISMATCH, " :Password incorrect\r\n");
         }
         return (0);
 
@@ -164,7 +164,17 @@ int Server::send_privmsg(int fd, std::string str) {
         return (send(fd, str.c_str(), str.size(), 0));
 }
 
-bool Server::nick_check(std::string &nick, int fd){
+void Server::updateOper(std::string old_nick, std::string new_nick, int fd) {
+        std::map<std::string, std::string>::iterator it = chan_oper.begin();
+        while(it != chan_oper.end()) {
+                if (it->second == old_nick) {
+                        it->second = new_nick;
+                }
+                it++;
+        }
+}
+
+bool Server::nick_check(std::string &nick, int fd) {
         std::map<int, Client>::iterator it = _m_fd2client.begin();
         while(it != _m_fd2client.end()) {
                 std::cout << (it->second.getNick()) << '\n';
@@ -179,18 +189,19 @@ bool Server::nick_check(std::string &nick, int fd){
 
 int Server::nickcmd(Message msg, int fd){
         if (msg.getParams().size() == 0) {
-                send_err(fd, ERR_NONICKNAMEGIVEN, " :No nickname given\n");
+                send_err(fd, ERR_NONICKNAMEGIVEN, " :No nickname given\r\n");
         }
         else if (msg.getParams().size() > 1) {
-                send_err(fd, ERR_NEEDMOREPARAMS, msg.getCmd() + " :Syntax error\n");
+                send_err(fd, ERR_NEEDMOREPARAMS, msg.getCmd() + " :Syntax error\r\n");
         }
         else if (msg.getParams().front() == _m_fd2client[fd].getNick()) {
-                send_err(fd, ERR_NICKNAMEINUSE, " <" + msg.getParams().front() +"> :Nickname is already in use\n");
+                send_err(fd, ERR_NICKNAMEINUSE, " <" + msg.getParams().front() +"> :Nickname is already in use\r\n");
         }
         else if (nick_check(msg.getParams().front(), fd) == false) {
-                send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\n");
+                send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\r\n");
         }
         else if (_m_fd2client[fd].getReg()) {
+                updateOper(_m_fd2client[fd].getNick(), msg.getParams().front(), fd);
                 noticeNickInChans(fd, _m_fd2client[fd].getCprefix(), msg.getParams().front());
                 _m_fd2client[fd].setNick(msg.getParams().front());
                 std::string prefix;
@@ -226,19 +237,19 @@ int Server::passcmd(Message & msg, int fd) {
 
         if (_m_fd2client[fd].getCorr() == false) {
                 if (msg.getParams().size() == 0) {
-                        send_err(fd, ERR_NEEDMOREPARAMS, " PASS :Not enough parameters\n");
+                        send_err(fd, ERR_NEEDMOREPARAMS, " PASS :Not enough parameters\r\n");
                 }
                 else if (msg.getParams().front() == _password) {
                         _m_fd2client.insert(std::pair<int, Client>(fd, find_CfromFd(fd)));
                         _m_fd2client[fd].setCorr(true);
                 }
                 else {
-                        send_privmsg(fd, "ERROR :Access denied: Bad password?\n"); // erreur
+                        send_privmsg(fd, "ERROR :Access denied: Bad password?\r\n"); // erreur
                         std::cout << "bad pass" << '\n';
                 }
         }
         else {
-                send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
+                send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\r\n");
         }
         return(0);
 }
@@ -275,14 +286,14 @@ int Server::usercmd(Message &msg, int fd) {
                                 if (_m_fd2client[fd].getNickstatus() && _m_fd2client[fd].getUserstatus()) {
                                         _m_fd2client[fd].setReg(true);
                                 }
-                                send_privmsg(fd, ":irc.example.net 001 " + _m_fd2client[fd].getNick() + " :Welcome to the Internet Relay Network " + _m_fd2client[fd].getCprefix() + "\n");
+                                send_privmsg(fd, ":irc.example.net 001 " + _m_fd2client[fd].getNick() + " :Welcome to the Internet Relay Network " + _m_fd2client[fd].getCprefix() + "\r\n");
                         }
                         else{
-                                send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\n");
+                                send_err(fd, ERR_ALREADYREGISTERED, " :You may not reregister\r\n");
                         }
                 }
                 else {
-                        send_err(fd, ERR_NEEDMOREPARAMS, " <USER> :Not enough parameters\n");
+                        send_err(fd, ERR_NEEDMOREPARAMS, " <USER> :Not enough parameters\r\n");
                 }
         }
         return(0);
@@ -339,7 +350,7 @@ void Server::sendtoAllbutme(int fd, std::vector<Client*> at, std::string msg)
                 // Client to_send = *(*client);
                 int fd_tmp = (*(*client)).getFd();
                 if (fd_tmp > 0 && fd != fd_tmp)
-                        send_privmsg(fd_tmp, msg + "\n");
+                        send_privmsg(fd_tmp, msg + "\r\n");
         }
 
 }
@@ -370,7 +381,7 @@ std::string Server::getmsg(Message &msg, int fd, std::string name)
                 msg_tosend.append(*it);
         }
         else {
-                send_err(fd, ERR_NEEDMOREPARAMS, "Syntax Error\n"); // changer !
+                send_err(fd, ERR_NEEDMOREPARAMS, "Syntax Error\r\n"); // changer !
         }
         return (msg_tosend);
 }
@@ -390,7 +401,7 @@ void Server::privmsg(Message &msg, int fd)
                                         sendtoAllbutme(fd, chan[*it_recv], msg_tosend);
                                 }
                                 else {
-                                        send_err(fd, ERR_CANNOTSENDTOCHAN, "<" + *it_recv + "> :Cannot send to channel\n");
+                                        send_err(fd, ERR_CANNOTSENDTOCHAN, "<" + *it_recv + "> :Cannot send to channel\r\n");
                                 }
                         }
                         else {
@@ -400,7 +411,7 @@ void Server::privmsg(Message &msg, int fd)
                                         if (it_clients->second.getNick() == *it_recv) {
                                                 std::cout << "let's send some shit boy -> " << msg_tosend << std::endl;
                                                 std::cout << "fd found -> " << it_clients->second.getFd() << std::endl;
-                                                send_privmsg(it_clients->second.getFd(), msg_tosend + "\n");
+                                                send_privmsg(it_clients->second.getFd(), msg_tosend + "\r\n");
                                         }
                                 }
                         }
@@ -409,7 +420,7 @@ void Server::privmsg(Message &msg, int fd)
         }
         else {
                 send_err(fd, ERR_NOTEXTTOSEND, " :No text to send     or     ");
-                send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick/channel\n");
+                send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().front() + "> :No such nick/channel\r\n");
         }
 }
 
@@ -425,8 +436,8 @@ void Server::dispMemberName(int fd, std::string chan_name) {
                         send_privmsg(fd, (*it)->getNick() + " ");
                 }
         }
-        send_privmsg(fd, "\n");
-        send_privmsg(fd, ":" + static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_ENDOFNAMES) + " " + nick + " " + chan_name + " :End of NAMES list\n"); //:irc.example.net 366 koko #jiji :End of NAMES list
+        send_privmsg(fd, "\r\n");
+        send_privmsg(fd, ":" + static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_ENDOFNAMES) + " " + nick + " " + chan_name + " :End of NAMES list\r\n"); //:irc.example.net 366 koko #jiji :End of NAMES list
 }
 
 int Server::joincmd(Message &msg, int fd)
@@ -457,7 +468,7 @@ int Server::joincmd(Message &msg, int fd)
 
                                                 }
                                                 else {
-                                                        send_err(fd, ERR_BADCHANNELKEY, ":Cannot join channel (+k)\n");
+                                                        send_err(fd, ERR_BADCHANNELKEY, ":Cannot join channel (+k)\r\n");
                                                 }
                                         }
                                         //sur invite ?
@@ -479,11 +490,11 @@ int Server::joincmd(Message &msg, int fd)
                                 }
                         }
                         else{
-                                send_err(fd, ERR_NOSUCHCHANNEL, ":No such channel\n");
+                                send_err(fd, ERR_NOSUCHCHANNEL, ":No such channel\r\n");
                         }
                 }
                 else{
-                        send_err(fd, ERR_NEEDMOREPARAMS, ":Not enough parameters\n");
+                        send_err(fd, ERR_NEEDMOREPARAMS, ":Not enough parameters\r\n");
                 }
                 it_chan++;
                 it_pass++;
@@ -540,10 +551,10 @@ int Server::do_cmd(Message msg, int fd){
                         }
                 }
                 else
-                        send_err(fd, ERR_UNKNOWNCOMMAND, " :Unknown command\n");
+                        send_err(fd, ERR_UNKNOWNCOMMAND, " :Unknown command\r\n");
         }
         else {
-                send_err(fd, ERR_NOTREGISTERED, "* :Connection not registered\n");
+                send_err(fd, ERR_NOTREGISTERED, "* :Connection not registered\r\n");
                 //join privmsg(#chan || nick) OPER-> KILL
         }
         return (0);

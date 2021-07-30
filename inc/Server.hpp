@@ -95,6 +95,7 @@ void dispMemberName(int fd, std::string chan_name);
 bool bufferComplete(int fd, char buf[5000]);
 void remove_Cinchans(int fd);
 void noticeNickInChans(int fd, std::string old_pref, std::string new_nick);
+void updateOper(std::string old_nick, std::string new_nick, int fd);
 
 };
 
