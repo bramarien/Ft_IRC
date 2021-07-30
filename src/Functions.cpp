@@ -442,62 +442,62 @@ void Server::dispMemberName(int fd, std::string chan_name) {
 
 int Server::joincmd(Message &msg, int fd)
 {
-        //commencer par verifier nombre de parametres
-        std::list<std::string> chan_list = split_every_char(msg.getParams().front(), ',');
-        std::list<std::string>::iterator it_chan = chan_list.begin();
-        std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
-        std::list<std::string>::iterator it_pass = pass_list.begin();
-        //send message to all users once someone is logged in channel
-        while((it_chan != chan_list.end()) && (it_pass != pass_list.end()))
-        {
-                std::string chan_name = *it_chan;
-                size_t size = msg.getParams().size();
-                if(size <= 2 && size >= 1) {
-                        if (chan_name[0] == '#')
-                        {
-                                if (chan.find(chan_name) != chan.end())
+        if (msg.getParams().size() > 2) {
+                std::list<std::string> chan_list = split_every_char(msg.getParams().front(), ',');
+                std::list<std::string>::iterator it_chan = chan_list.begin();
+                std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
+                std::list<std::string>::iterator it_pass = pass_list.begin();
+                while((it_chan != chan_list.end()) && (it_pass != pass_list.end()))
+                {
+                        std::string chan_name = *it_chan;
+                        size_t size = msg.getParams().size();
+                        if(size <= 2 && size >= 1) {
+                                if (chan_name[0] == '#')
                                 {
-                                        if (find_Cinchan(fd, chan.find(chan_name)->second) != true)
+                                        if (chan.find(chan_name) != chan.end())
                                         {
-                                                if ((chan_pass.find(msg.getParams().front()) == chan_pass.end()) || (chan_pass.find(msg.getParams().front())->second == *it_pass))
+                                                if (find_Cinchan(fd, chan.find(chan_name)->second) != true)
                                                 {
-                                                        Client *temp = &(_m_fd2client[fd]);
-                                                        chan.find(chan_name)->second.push_back(temp);
-                                                        sendtoAll(fd, chan[chan_name], ":" + _m_fd2client[fd].getCprefix() + " JOIN :" + chan_name);
-                                                        dispMemberName(fd, chan_name);
+                                                        if ((chan_pass.find(msg.getParams().front()) == chan_pass.end()) || (chan_pass.find(msg.getParams().front())->second == *it_pass))
+                                                        {
+                                                                Client *temp = &(_m_fd2client[fd]);
+                                                                chan.find(chan_name)->second.push_back(temp);
+                                                                sendtoAll(fd, chan[chan_name], ":" + _m_fd2client[fd].getCprefix() + " JOIN :" + chan_name);
+                                                                dispMemberName(fd, chan_name);
 
-                                                }
-                                                else {
-                                                        send_err(fd, ERR_BADCHANNELKEY, ":Cannot join channel (+k)\r\n");
+                                                        }
+                                                        else {
+                                                                send_err(fd, ERR_BADCHANNELKEY, ":Cannot join channel (+k)\r\n");
+                                                        }
                                                 }
                                         }
-                                        //sur invite ?
-                                        //est ce que le gars est ban/kick ?
+                                        else{
+                                                Client *temp = &(_m_fd2client[fd]);
+                                                std::vector<Client *> _v_cli_tmp;
+                                                _v_cli_tmp.push_back(temp);
+                                                chan_oper[chan_name] = temp->getNick();
+                                                chan[chan_name] = _v_cli_tmp;
+                                                if ((msg.getParams().size() == 2) && (*it_pass != "")) { //creation d'un chan a mdp
+                                                        chan_flag[chan_name] = "+m";
+                                                        chan_pass[chan_name] = msg.getParams().back();
+                                                }
+                                                sendtoAll(fd, chan[chan_name], ":" +  _m_fd2client[fd].getCprefix() + " JOIN :" + chan_name);
+                                                dispMemberName(fd, chan_name);
+                                        }
                                 }
                                 else{
-                                        Client *temp = &(_m_fd2client[fd]);
-                                        std::vector<Client *> _v_cli_tmp;
-                                        _v_cli_tmp.push_back(temp);
-                                        chan_oper[chan_name] = temp->getNick();
-                                        chan[chan_name] = _v_cli_tmp;
-                                        if ((msg.getParams().size() == 2) && (*it_pass != "")) { //creation d'un chan a mdp
-                                                chan_flag[chan_name] = "+m";
-                                                chan_pass[chan_name] = msg.getParams().back();
-                                        }
-                                        sendtoAll(fd, chan[chan_name], ":" +  _m_fd2client[fd].getCprefix() + " JOIN :" + chan_name);
-                                        dispMemberName(fd, chan_name);
-                                        // sendtoAll(chan[chan_name], (static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) +  " lol")); //send to all
+                                        send_err(fd, ERR_NOSUCHCHANNEL, ":No such channel\r\n");
                                 }
                         }
                         else{
-                                send_err(fd, ERR_NOSUCHCHANNEL, ":No such channel\r\n");
+                                send_err(fd, ERR_NEEDMOREPARAMS, ":Not enough parameters\r\n");
                         }
+                        it_chan++;
+                        it_pass++;
                 }
-                else{
-                        send_err(fd, ERR_NEEDMOREPARAMS, ":Not enough parameters\r\n");
-                }
-                it_chan++;
-                it_pass++;
+        }
+        else{
+                send_err(fd, ERR_NEEDMOREPARAMS, ":Syntax error\r\n");
         }
         return(0);
 }
