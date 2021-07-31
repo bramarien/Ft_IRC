@@ -71,6 +71,7 @@ std::string getPass(void) const {
 
 //Functions
 int modecmd(Message &msg, int fd);
+int partcmd(Message &msg, int fd);
 int quitcmd(int fd);
 int squitcmd(Message &msg, int fd);
 int namecmd(Message &msg, int fd);
