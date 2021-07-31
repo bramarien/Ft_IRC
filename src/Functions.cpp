@@ -1,6 +1,65 @@
 #include "../inc/Server.hpp"
 // #include "../inc/main.hpp"
 
+int Server::modecmd(Message &msg, int fd) {
+        if (msg.getParams().size() == 3) {
+                if (chan.find(msg.getParams().front()) != chan.end()) {
+                        if (find_Cinchan(fd, chan_oper[msg.getParams().front()]) || _m_fd2client[fd].getOp()) {
+                          std::list<std::string> temp = msg.getParams();
+                          std::list<std::string>::iterator it_args = temp.begin();
+                          it_args++;
+                          if (*it_args == "+o") {
+                            std::vector<Client*>::iterator it_opcli = chan_oper[msg.getParams().front()].begin();
+                            for (; it_opcli != chan_oper[msg.getParams().front()].end(); it_opcli++) {
+                              if ((**it_opcli).getNick() == msg.getParams().back()) {
+                                return (0);
+                              }
+                            }
+                            if (it_opcli == chan_oper[msg.getParams().front()].end()) {
+                              std::map<int, Client>::iterator it_clients = _m_fd2client.begin();
+                              for (; it_clients != _m_fd2client.end(); it_clients++) {
+                                      if (it_clients->second.getNick() == msg.getParams().back()) {
+                                              std::cout << "fd found -> " << it_clients->second.getFd() << std::endl;
+                                              Client *temp = &(_m_fd2client[it_clients->second.getFd()]);
+                                              chan_oper[msg.getParams().front()].push_back(temp);
+                                              std::cout << "USER ->" << it_clients->second.getNick() << " Has been OP" << std::endl;
+                                      }
+                              }
+                            }
+                          }
+                          else if (*it_args == "-o") {
+                            std::vector<Client*>::iterator it_opcli = chan_oper[msg.getParams().front()].begin();
+                            for (; it_opcli != chan_oper[msg.getParams().front()].end(); it_opcli++) {
+                              if ((**it_opcli).getNick() == msg.getParams().back()) {
+                                break;
+                              }
+                            }
+                            if (it_opcli == chan_oper[msg.getParams().front()].end()) {
+                              send_err(fd, ERR_NOSUCHNICK, " <" + msg.getParams().back() + "> :No such nick\r\n");
+                            }
+                            else {
+                              std::cout << "USER ->" << (**it_opcli).getNick() << " Has been deOP" << std::endl;
+                              chan_oper[msg.getParams().front()].erase(it_opcli);
+                            }
+                          }
+                          else {
+                            std::cout << "Bad mode ->" << *it_args << std::endl;
+                          }
+                        }
+                        else {
+                          send_err(fd, ERR_NOPRIVILEGES," :Permission Denied- You're not an operator or operator of " + msg.getParams().front() + " channel \r\n");
+                        }
+                }
+                else {
+                  send_err(fd, ERR_NOSUCHCHANNEL, "<" + msg.getParams().front() + "> :No such channel\r\n");
+                }
+        }
+        else {
+          send_err(fd, ERR_NEEDMOREPARAMS, " <" + msg.getCmd() + "> :Need 3 paramaters\r\n");
+        }
+        return (0);
+}
+
 int Server::quitcmd(int fd) {
         std::cout << "Closing connection for " << _m_fd2client[fd].getNick() << std::endl;
         remove_Cinchans(fd);
@@ -35,9 +94,7 @@ int Server::namecmd(Message &msg, int fd) {
 
 int Server::listcmd(Message &msg, int fd) {
         if (msg.getParams().size() == 0) {
-                std::list<std::string> receiver_list = split_every_char(msg.getParams().front(), ',');
-                std::list<std::string>::iterator it_recv = receiver_list.begin();
-                std::string list_tosend = "";
+                std::string list_tosend = " ";
                 if (chan.size() >= 1) {
                         std::map<std::string, std::vector<Client*> >::iterator it_chan = chan.begin();
                         for (; it_chan != chan.end(); it_chan++) {
@@ -60,7 +117,7 @@ int Server::kickcmd(Message &msg, int fd) {
                                 break;
                 }
                 if (it_chan != chan.end()) {
-                        if (_m_fd2client[fd].getNick() == chan_oper[it_chan->first]) {
+                        if (find_Cinchan(fd, chan_oper.find(it_chan->first)->second) == true) {
                                 it_args++;
                                 std::vector<Client*>::iterator it_cli = it_chan->second.begin();
                                 for (; it_cli != it_chan->second.end(); it_cli++) {
@@ -164,16 +221,6 @@ int Server::send_privmsg(int fd, std::string str) {
         return (send(fd, str.c_str(), str.size(), 0));
 }
 
-void Server::updateOper(std::string old_nick, std::string new_nick, int fd) {
-        std::map<std::string, std::string>::iterator it = chan_oper.begin();
-        while(it != chan_oper.end()) {
-                if (it->second == old_nick) {
-                        it->second = new_nick;
-                }
-                it++;
-        }
-}
-
 bool Server::nick_check(std::string &nick, int fd) {
         std::map<int, Client>::iterator it = _m_fd2client.begin();
         while(it != _m_fd2client.end()) {
@@ -201,7 +248,6 @@ int Server::nickcmd(Message msg, int fd){
                 send_err(fd, ERR_NICKCOLLISION, " <" + msg.getParams().front() + "> :Nickname collision\r\n");
         }
         else if (_m_fd2client[fd].getReg()) {
-                updateOper(_m_fd2client[fd].getNick(), msg.getParams().front(), fd);
                 noticeNickInChans(fd, _m_fd2client[fd].getCprefix(), msg.getParams().front());
                 _m_fd2client[fd].setNick(msg.getParams().front());
                 std::string prefix;
@@ -335,8 +381,17 @@ void Server::remove_Cinchans(int fd)
                         }
                 }
                 if (it_cli != it_chan->second.end()) {
-                        if (_m_fd2client[fd].getNick() == chan_oper[it_chan->first]) {
-                                chan_oper.erase(it_chan->first);
+                        if (find_Cinchan(fd, chan_oper[it_chan->first]) == true) {
+                                std::vector<Client*>::iterator it_opcli = chan_oper[it_chan->first].begin();
+                                for (; it_opcli != chan_oper[it_chan->first].end(); it_opcli++) {
+                                  if ((**it_opcli).getFd() == _m_fd2client[fd].getFd()){
+                                    std::cout << "OP USER FOUND Let's kick him -->" << (**it_cli).getNick() << std::endl;
+                                    break;
+                                  }
+                                }
+                                if (it_opcli != chan_oper[it_chan->first].end()){
+                                  chan_oper[it_chan->first].erase(it_opcli);
+                                }
                         }
                         it_chan->second.erase(it_cli);
                 }
@@ -429,11 +484,11 @@ void Server::dispMemberName(int fd, std::string chan_name) {
         send_privmsg(fd, ( ":" + static_cast<std::string>(SERV_NAME) + " " + static_cast<std::string>(RPL_NAMREPLY) + " " + nick + " = " + chan_name + " :")); // :irc.example.net 353 koko = #chan :@koko
         std::vector<Client *>::iterator it = chan[chan_name].begin();
         for(; it != chan[chan_name].end(); it++) {
-                if ((*it)->getOp() || (chan_oper[chan_name] == (*it)->getNick())) {
-                        send_privmsg(fd, "@" + (*it)->getNick() + " ");
+                if ((**it).getOp() || find_Cinchan((**it).getFd(), chan_oper[chan_name]) == true) {
+                        send_privmsg(fd, "@" + (**it).getNick() + " ");
                 }
                 else {
-                        send_privmsg(fd, (*it)->getNick() + " ");
+                        send_privmsg(fd, (**it).getNick() + " ");
                 }
         }
         send_privmsg(fd, "\r\n");
@@ -442,7 +497,7 @@ void Server::dispMemberName(int fd, std::string chan_name) {
 
 int Server::joincmd(Message &msg, int fd)
 {
-        if (msg.getParams().size() > 2) {
+        if (msg.getParams().size() < 2) {
                 std::list<std::string> chan_list = split_every_char(msg.getParams().front(), ',');
                 std::list<std::string>::iterator it_chan = chan_list.begin();
                 std::list<std::string> pass_list = split_every_char(msg.getParams().back(), ',');
@@ -475,7 +530,7 @@ int Server::joincmd(Message &msg, int fd)
                                                 Client *temp = &(_m_fd2client[fd]);
                                                 std::vector<Client *> _v_cli_tmp;
                                                 _v_cli_tmp.push_back(temp);
-                                                chan_oper[chan_name] = temp->getNick();
+                                                chan_oper[chan_name].push_back(temp);
                                                 chan[chan_name] = _v_cli_tmp;
                                                 if ((msg.getParams().size() == 2) && (*it_pass != "")) { //creation d'un chan a mdp
                                                         chan_flag[chan_name] = "+m";
@@ -542,6 +597,9 @@ int Server::do_cmd(Message msg, int fd){
                         }
                         else if (msg.getCmd() == "QUIT") {
                                 quitcmd(fd);
+                        }
+                        else if (msg.getCmd() == "MODE") {
+                                modecmd(msg, fd);
                         }
                         if (_m_fd2client[fd].getOp() == true) {
                                 if (msg.getCmd() == "KILL")

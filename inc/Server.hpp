@@ -35,7 +35,7 @@ public:
 // HOW TO USE : chan["#channel"][10] -> accees au 10eme client du chan "#channel"
 std::map<std::string, std::vector<Client*> > chan;
 std::map<std::string, std::string> chan_flag; // see todo pour flags possible sur channel
-std::map<std::string, std::string> chan_oper;
+std::map<std::string, std::vector<Client*> > chan_oper;
 std::map<std::string, std::string> chan_pass; // la on store les mdp
 
 Server(int port, std::string pass);
@@ -70,6 +70,7 @@ std::string getPass(void) const {
 }
 
 //Functions
+int modecmd(Message &msg, int fd);
 int quitcmd(int fd);
 int squitcmd(Message &msg, int fd);
 int namecmd(Message &msg, int fd);
